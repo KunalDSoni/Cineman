@@ -604,17 +604,35 @@ const engine=new AudioEngine();
 /* ═══════════ 2. HAPTICS (+ iOS micro-jolt fallback) ═══════════ */
 const Haptics={
   supported:(typeof navigator!=='undefined'&&'vibrate'in navigator),
-  fire(pattern,joltAmp){
-    let ok=false;
-    if(this.supported){try{ok=navigator.vibrate(pattern);}catch(e){ok=false;}}
-    if(!ok) microJolt(joltAmp||1);   // substitute a physical-feeling kick
+  // real device vibration only (returns true if the platform actually buzzed).
+  // NB: desktop Chrome has vibrate() but it's a silent no-op, so callers that
+  // need a *felt* response should pair this with a visible jolt.
+  buzz(pattern){ if(this.supported){ try{ return navigator.vibrate(pattern)!==false; }catch(e){} } return false; },
+  fire(pattern,joltAmp,el){
+    if(!this.buzz(pattern)) microJolt(joltAmp||1, el);   // substitute a physical-feeling kick
   }
 };
-function microJolt(amp){
+function microJolt(amp,target){
   if(REDUCED) return;
-  const a=2*amp, st='#filmstage';
+  const a=2*(amp||1), st=target||'#filmstage';
   gsap.killTweensOf(st);
   gsap.fromTo(st,{x:0,y:0},{keyframes:[{x:a,y:-a,duration:.03},{x:-a*.7,y:a*.6,duration:.03},{x:0,y:0,duration:.06}],ease:'none'});
+}
+/* The clapperboard physically recoils from the strike — the signature haptic
+   moment. Always shown: it's what's on screen at clap-time (#filmstage is hidden
+   behind the Slate), and on desktop/iOS — which have no vibration hardware — this
+   visible kick IS the haptic. Paired with real device vibration in roll(). */
+function clapperKick(){
+  gsap.fromTo(sticks,{rotation:-30},{rotation:0,duration:.11,ease:'power4.in'});
+  if(REDUCED) return;
+  gsap.killTweensOf('#clapper');
+  gsap.fromTo('#clapper',{x:0,y:0,scale:1},{keyframes:[
+    {scale:.95,y:4,duration:.05,ease:'power2.in'},
+    {x:6,y:-5,scale:1,duration:.05},
+    {x:-5,y:4,duration:.05},
+    {x:3,y:-2,duration:.05},
+    {x:0,y:0,duration:.08,ease:'power2.out'}
+  ],ease:'none'});
 }
 /* pair a sound with its haptic so they hit as one event */
 function hit(sound,pattern,jolt){ if(sound) sound(); Haptics.fire(pattern,jolt); }
@@ -632,15 +650,19 @@ function buildScroll(){
 }
 async function roll(){
   if(rolled)return; rolled=true;
+
+  // CLAP — fire the physical hit IMMEDIATELY, inside the click gesture so device
+  // vibration is permitted: a real buzz (mobile) + a guaranteed visible recoil of
+  // the clapperboard (on desktop/iOS that kick IS the haptic).
+  Haptics.buzz([0,40,30,70]);
+  clapperKick();
+
   const ready=await engine.init();           // (b) AudioContext born from this gesture
   // honour any persisted MOS choice from earlier in the session
   const pref=sessionStorage.getItem(SS_KEY);
   if(pref==='mos'){ engine.setMuted(true); setToggle(false); } else { setToggle(true); }
 
-  // CLAP — sticks snap shut, synced to the transient + haptic
-  hit(()=>engine.clap(),[0,45],1.6);
-  if(!REDUCED){ gsap.fromTo(sticks,{rotation:-30},{rotation:0,duration:.12,ease:'power4.in'});
-                gsap.fromTo('#clapper',{scale:1},{scale:.98,duration:.08,yoyo:true,repeat:1}); }
+  if(ready) engine.clap();                    // the clap sound (needs the context)
 
   // MOTOR whir, then THREAD the reel (hum)
   setTimeout(()=>{ if(ready)engine.motor(); },170);
