@@ -95,21 +95,22 @@ function initCinematicCanvas() {
       ctx.clearRect(0, 0, W, H);
 
       /* ── Projector light cone from upper-right ── */
-      const srcX = W * 0.85;
-      const srcY = H * (-0.08);
+      const srcX = W * 0.86;
+      const srcY = H * (-0.05);
 
-      // Organic flicker
+      // Organic flicker — layered frequencies for realistic lamp behaviour
       const flicker =
-        0.86 +
-        0.08 * Math.sin(t * 0.000095) +
+        0.84 +
+        0.10 * Math.sin(t * 0.000095) +
         0.05 * Math.cos(t * 0.000041) +
-        (Math.random() > 0.96 ? (Math.random() - 0.5) * 0.05 : 0);
+        0.02 * Math.sin(t * 0.00031)  +
+        (Math.random() > 0.95 ? (Math.random() - 0.5) * 0.06 : 0);
 
-      // Clip to cone shape
+      // Primary wide cone
       ctx.save();
       ctx.beginPath();
-      const coneLen = Math.max(W, H) * 1.8;
-      const halfAng = 0.42;
+      const coneLen = Math.max(W, H) * 2.0;
+      const halfAng = 0.48;
       const coneDir = Math.PI * 0.67;
       ctx.moveTo(srcX, srcY);
       ctx.lineTo(
@@ -124,14 +125,23 @@ function initCinematicCanvas() {
       ctx.clip();
 
       const cg = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, coneLen);
-      cg.addColorStop(0,    `rgba(255,200,90,${0.55 * flicker})`);
-      cg.addColorStop(0.08, `rgba(228,170,60,${0.40 * flicker})`);
-      cg.addColorStop(0.25, `rgba(200,140,40,${0.22 * flicker})`);
-      cg.addColorStop(0.55, `rgba(150,95,20,${0.08 * flicker})`);
+      cg.addColorStop(0,    `rgba(255,210,110,${0.72 * flicker})`);
+      cg.addColorStop(0.05, `rgba(240,185,70,${0.55 * flicker})`);
+      cg.addColorStop(0.15, `rgba(210,155,45,${0.32 * flicker})`);
+      cg.addColorStop(0.40, `rgba(160,110,25,${0.13 * flicker})`);
+      cg.addColorStop(0.70, `rgba(90,55,10,${0.04 * flicker})`);
       cg.addColorStop(1,    'rgba(0,0,0,0)');
       ctx.fillStyle = cg;
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
+
+      // Secondary hot spot at source (bright lamp core)
+      const hg = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, W * 0.18);
+      hg.addColorStop(0,   `rgba(255,230,140,${0.35 * flicker})`);
+      hg.addColorStop(0.4, `rgba(220,170,60,${0.12 * flicker})`);
+      hg.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = hg;
+      ctx.fillRect(0, 0, W, H);
 
       /* ── Dust particles in beam ── */
       particles.forEach(p => {
@@ -141,37 +151,44 @@ function initCinematicCanvas() {
         if (p.y < -0.05) p.y = 1.05;
         if (p.x < -0.05) p.x = 1.05;
         if (p.x >  1.05) p.x = -0.05;
+        if (p.x < 0.18 || p.y > 0.92) return;
 
-        // Only draw in cone area (rough screen-space check)
-        if (p.x < 0.25 || p.y > 0.90) return;
-
-        const flick = 0.35 + 0.65 * Math.abs(Math.sin(p.phase));
+        const flick = 0.3 + 0.7 * Math.abs(Math.sin(p.phase));
         ctx.beginPath();
         ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(240,190,80,${p.o * flick * 0.45})`;
+        ctx.fillStyle = `rgba(255,200,90,${p.o * flick * 0.55})`;
         ctx.fill();
       });
 
-      /* ── Anamorphic lens flare ── */
-      const fy     = H * 0.11;
-      const fa     = 0.10 + 0.03 * Math.sin(t * 0.0007);
+      /* ── Anamorphic lens flare — 3 stacked streaks ── */
+      const fy = H * 0.10;
+      const fa = 0.16 + 0.04 * Math.sin(t * 0.0007);
 
+      // Main thick streak
       const fg = ctx.createLinearGradient(0, fy, W, fy);
-      fg.addColorStop(0,    'rgba(255,200,90,0)');
-      fg.addColorStop(0.22, `rgba(228,170,60,${fa})`);
-      fg.addColorStop(0.5,  `rgba(255,220,130,${fa * 1.8})`);
-      fg.addColorStop(0.78, `rgba(228,170,60,${fa})`);
-      fg.addColorStop(1,    'rgba(255,200,90,0)');
-      ctx.strokeStyle = fg; ctx.lineWidth = 1.5;
+      fg.addColorStop(0,    'rgba(255,210,100,0)');
+      fg.addColorStop(0.18, `rgba(255,200,80,${fa})`);
+      fg.addColorStop(0.5,  `rgba(255,230,150,${fa * 2.2})`);
+      fg.addColorStop(0.82, `rgba(255,200,80,${fa})`);
+      fg.addColorStop(1,    'rgba(255,210,100,0)');
+      ctx.strokeStyle = fg; ctx.lineWidth = 2;
       ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
 
-      // Thin secondary
-      const fg2 = ctx.createLinearGradient(0, fy + 4, W, fy + 4);
-      fg2.addColorStop(0.3, 'rgba(200,150,46,0)');
-      fg2.addColorStop(0.5, `rgba(200,150,46,${fa * 0.5})`);
-      fg2.addColorStop(0.7, 'rgba(200,150,46,0)');
-      ctx.strokeStyle = fg2; ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.moveTo(0, fy + 4); ctx.lineTo(W, fy + 4); ctx.stroke();
+      // Mid streak
+      const fg2 = ctx.createLinearGradient(0, fy + 5, W, fy + 5);
+      fg2.addColorStop(0.25, 'rgba(228,170,60,0)');
+      fg2.addColorStop(0.5,  `rgba(228,170,60,${fa * 0.7})`);
+      fg2.addColorStop(0.75, 'rgba(228,170,60,0)');
+      ctx.strokeStyle = fg2; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, fy + 5); ctx.lineTo(W, fy + 5); ctx.stroke();
+
+      // Fine streak
+      const fg3 = ctx.createLinearGradient(0, fy - 3, W, fy - 3);
+      fg3.addColorStop(0.3, 'rgba(200,150,46,0)');
+      fg3.addColorStop(0.5, `rgba(200,150,46,${fa * 0.4})`);
+      fg3.addColorStop(0.7, 'rgba(200,150,46,0)');
+      ctx.strokeStyle = fg3; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(0, fy - 3); ctx.lineTo(W, fy - 3); ctx.stroke();
 
       /* ── Mouse glow ── */
       const mg = ctx.createRadialGradient(
@@ -827,8 +844,7 @@ function initFooter() {
 function init() {
   gsap.registerPlugin(ScrollTrigger);
   initGrain();
-  initCinematicCanvas();   // always-on fallback background
-  initYouTubeHandler();    // show video on top only if embedding works
+  initCinematicCanvas();   // cinematic projector atmosphere — permanent hero bg
   initCursor();
   initLoader();
 

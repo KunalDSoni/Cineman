@@ -428,23 +428,13 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   display: block;
 }
 
-/* YouTube — slides on top of canvas when embedding works */
-.hero-video-wrap {
-  position: absolute; inset: 0;
-  overflow: hidden; z-index: 2;
-  opacity: 0;
-  transition: opacity 1.4s ease;
+/* Reel CTA button */
+.btn-reel {
+  gap: 0.6rem;
 }
-.hero-video-wrap.is-ready { opacity: 1; }
-#hero-video {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  width: 177.78vh;
-  min-width: 100%; height: 100%;
-  min-height: 56.25vw;
-  pointer-events: none;
-  border: none;
+.btn-play-icon {
+  font-size: 0.65rem;
+  line-height: 1;
 }
 
 /* Video darkening overlays (z-index 3+, above both canvas & video) */

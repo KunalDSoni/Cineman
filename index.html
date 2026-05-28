@@ -123,16 +123,9 @@
       <!-- Cinematic Canvas Fallback (always visible behind video) -->
       <canvas id="hero-canvas" aria-hidden="true"></canvas>
 
-      <!-- YouTube Video Background (shown only when embedding works) -->
-      <div class="hero-video-wrap" id="hero-video-wrap" aria-hidden="true">
-        <iframe
-          id="hero-video"
-          src="https://www.youtube.com/embed/K-rKRE4ksiE?autoplay=1&mute=1&loop=1&playlist=K-rKRE4ksiE&controls=0&showinfo=0&rel=0&enablejsapi=1&playsinline=1&disablekb=1&modestbranding=1&iv_load_policy=3&fs=0&color=white&cc_load_policy=0"
-          frameborder="0"
-          allow="autoplay; encrypted-media"
-          title="CineMan Productions Reel"
-        ></iframe>
-      </div>
+      <!-- Video wrap removed: YouTube Error 153 blocks iframe embed.
+           Canvas cinematic atmosphere is the hero background.
+           Reel opens in new tab via CTA button. -->
 
       <!-- Cinematic overlays -->
       <div class="hero-overlay"      aria-hidden="true"></div>
@@ -161,9 +154,10 @@
         </p>
 
         <div class="hero-actions" id="hero-actions">
-          <a href="#work" class="btn-primary">
+          <a href="https://www.youtube.com/watch?v=K-rKRE4ksiE" target="_blank" rel="noopener" class="btn-primary btn-reel">
+            <span class="btn-play-icon" aria-hidden="true">▶</span>
             <span>Watch Our Reel</span>
-            <span class="btn-arrow">→</span>
+            <span class="btn-arrow">↗</span>
           </a>
           <a href="#films" class="btn-ghost">Explore Films</a>
         </div>
