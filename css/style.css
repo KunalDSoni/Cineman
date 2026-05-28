@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
    CINEMAN PRODUCTIONS — CINEMATIC THRILLER DESIGN SYSTEM
-   Monks × A24 × Netflix · Premium Amber × Deep Black
+   Premium Amber × Deep Black
    Version 2.0
 ═══════════════════════════════════════════════════════ */
 
@@ -66,7 +66,7 @@ button { cursor:none; background:none; border:none; font-family:inherit; }
   height: 100%;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.055;
+  opacity: var(--grain-o, 0.055);   /* engine-driven: reacts to motion + breath */
   mix-blend-mode: overlay;
 }
 
@@ -1630,4 +1630,282 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   .manifesto { padding: 5rem var(--pad-x); }
   .statement-section { padding: 6rem var(--pad-x); }
   .section-header { margin-bottom: 2.5rem; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ░░ V3 — CINEMATIC DIRECTION LAYER ░░
+   "Directed, not designed." Overture · Atmosphere · The Reel ·
+   Sound · Scroll cinematography. Built on the v2 token system.
+═══════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────
+   PERSISTENT ATMOSPHERE — the whole site
+   lives inside a lens. Vignette + slow haze +
+   a drifting projector beam, all whisper-subtle.
+───────────────────────────────────────── */
+.atmosphere {
+  position: fixed; inset: 0;
+  z-index: 9991;
+  pointer-events: none;
+}
+/* Edge vignette — ties every section into one lens.
+   Deepens with tension: low exposure (mid-film), scroll energy, and idle. */
+.atmos-vignette {
+  position: absolute; inset: 0;
+  box-shadow:
+    inset 0 0 calc(170px + var(--vignette, 0) * 150px) 40px rgba(0,0,0, calc(0.5 + var(--vignette, 0) * 0.34)),
+    inset 0 0 60px 0 rgba(0,0,0,0.35);
+  transition: box-shadow 0.4s linear;
+}
+/* Drifting amber haze — depth over dark scenes; opacity breathes with the engine */
+.atmos-haze {
+  position: absolute; inset: -20%;
+  mix-blend-mode: screen;
+  opacity: calc(0.40 + var(--pulse, 0) * 0.18 + var(--energy, 0) * 0.30);
+  background:
+    radial-gradient(ellipse 40% 30% at 20% 18%, rgba(200,150,46,0.10), transparent 60%),
+    radial-gradient(ellipse 35% 40% at 85% 80%, rgba(120,80,20,0.10), transparent 60%);
+  animation: atmos-drift 28s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+@keyframes atmos-drift {
+  from { transform: translate3d(-2%, -1%, 0) scale(1.02); }
+  to   { transform: translate3d(3%,  2%, 0) scale(1.08); }
+}
+/* Foreground volumetric fog — adds physical depth, thickens with motion */
+.atmos-fog {
+  position: absolute; inset: -20%;
+  mix-blend-mode: screen;
+  filter: blur(50px);
+  opacity: calc(0.45 + var(--energy, 0) * 0.40);
+  background:
+    radial-gradient(ellipse 45% 35% at 62% 42%, rgba(200,150,46,0.06), transparent 62%),
+    radial-gradient(ellipse 38% 30% at 28% 70%, rgba(150,100,30,0.05), transparent 60%);
+  animation: atmos-fog-drift 38s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+@keyframes atmos-fog-drift {
+  from { transform: translate3d(-3%, 2%, 0) scale(1.04); }
+  to   { transform: translate3d(4%, -3%, 0) scale(1.12); }
+}
+/* A single slow light beam sweeping the whole page; brightness breathes */
+.atmos-beam {
+  position: absolute; top: -30%; left: 50%;
+  width: 60vw; height: 160vh;
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(14deg);
+  background: linear-gradient(180deg,
+    rgba(228,180,74,0.05) 0%, rgba(200,150,46,0.02) 40%, transparent 75%);
+  mix-blend-mode: screen;
+  opacity: calc(0.32 + var(--pulse, 0) * 0.30);
+  filter: blur(20px);
+  animation: atmos-sweep 22s ease-in-out infinite alternate;
+}
+@keyframes atmos-sweep {
+  from { transform: translateX(-60%) rotate(10deg); }
+  to   { transform: translateX(-40%) rotate(18deg); }
+}
+
+/* Reusable floating-dust field for dark scenes */
+.statement-inner { position: relative; z-index: 1; }
+.dust-field { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.dust-field span {
+  position: absolute; bottom: -10px;
+  width: 2px; height: 2px; border-radius: 50%;
+  background: rgba(228,180,74,0.5);
+  filter: blur(0.4px);
+  animation: dust-rise linear infinite;
+}
+@keyframes dust-rise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.5; }
+  100% { transform: translateY(-110vh) translateX(20px); opacity: 0; }
+}
+
+/* ─────────────────────────────────────────
+   OVERTURE — projector strike transition
+───────────────────────────────────────── */
+.loader-flash {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 60% 60% at 50% 45%,
+    rgba(255,236,190,0.95) 0%, rgba(228,180,74,0.5) 35%, transparent 75%);
+  opacity: 0; pointer-events: none;
+  mix-blend-mode: screen;
+}
+.loader-credit {
+  font-size: 0.62rem; font-weight: 700;
+  letter-spacing: 0.42em; text-transform: uppercase;
+  color: var(--c-kodak);
+  margin-top: 0.4rem; min-height: 1em;
+  opacity: 0;
+}
+.loader-credit .cap { color: var(--c-projector); }
+
+/* ─────────────────────────────────────────
+   THE REEL — "Enter the Frame" signature moment
+───────────────────────────────────────── */
+.reel {
+  position: relative;
+  background: var(--c-black);
+  min-height: 100vh;        /* runway is created by GSAP pin-spacing */
+}
+.reel-stage {
+  position: relative;
+  height: 100vh; width: 100%;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse 90% 90% at 50% 50%, #0c0a07 0%, #050403 70%);
+}
+/* Cinemascope letterbox bars that retract as the frame opens */
+.reel-bar {
+  position: absolute; left: 0; right: 0;
+  height: 16vh; background: var(--c-black);
+  z-index: 6; pointer-events: none;
+}
+.reel-bar--top { top: 0; }
+.reel-bar--bottom { bottom: 0; }
+
+.reel-credit {
+  position: absolute; top: 6.5vh; left: 0; right: 0;
+  text-align: center; z-index: 7;
+  font-size: 0.66rem; font-weight: 700;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--c-mid);
+}
+.reel-credit em { color: var(--c-kodak); font-style: normal; }
+
+/* The frame — starts small & centred, scrubs to fullscreen */
+.reel-frame {
+  position: relative;
+  width: 92vw; aspect-ratio: 2.39 / 1;
+  max-width: 1600px;
+  z-index: 3;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(200,150,46,0.18);
+  will-change: transform;
+}
+.reel-frame-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 70% 120% at 78% -10%, rgba(255,210,110,0.55), transparent 55%),
+    linear-gradient(160deg, #1a1206 0%, #0b0905 55%, #060504 100%);
+}
+.reel-frame-grade {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 88% 88% at 50% 50%, transparent 30%, rgba(5,4,3,0.6) 100%);
+}
+/* sprocket marks framing the centre frame */
+.reel-corner {
+  position: absolute; width: 22px; height: 22px;
+  border-color: rgba(228,180,74,0.6); border-style: solid; z-index: 4;
+}
+.reel-corner.tl { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+.reel-corner.tr { top: 12px; right: 12px; border-width: 1px 1px 0 0; }
+.reel-corner.bl { bottom: 12px; left: 12px; border-width: 0 0 1px 1px; }
+.reel-corner.br { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+
+/* Kinetic statement that crosses through the frame */
+.reel-word {
+  position: absolute; z-index: 5;
+  left: 0; right: 0; text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 7vw, 8rem);
+  font-weight: 900; line-height: 0.95;
+  color: var(--c-cream);
+  letter-spacing: -0.01em;
+  text-shadow: 0 6px 50px rgba(0,0,0,0.6);
+  opacity: 0;
+  will-change: transform, opacity;
+  padding: 0 var(--pad-x);
+}
+.reel-word em {
+  color: var(--c-projector); font-style: italic;
+  /* breathing projector glow — the word feels lit, not printed */
+  text-shadow:
+    0 0 calc(24px + var(--pulse, 0) * 46px) rgba(228,180,74, calc(0.16 + var(--pulse, 0) * 0.26)),
+    0 6px 50px rgba(0,0,0,0.5);
+}
+
+/* Scene marker — bottom corner like a timecode */
+.reel-timecode {
+  position: absolute; bottom: 6vh; right: var(--pad-x);
+  z-index: 7;
+  font-family: var(--font-mono);
+  font-size: 0.9rem; letter-spacing: 0.18em;
+  color: var(--c-kodak); opacity: 0.6;
+}
+@media (max-width: 768px) {
+  .reel-frame { width: 92vw; }
+  .reel-timecode { display: none; }
+}
+
+/* ─────────────────────────────────────────
+   SOUND TOGGLE — opt-in cinematic ambience
+───────────────────────────────────────── */
+.sound-toggle {
+  position: fixed; bottom: 1.6rem; right: 1.6rem;
+  z-index: 7500;
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 0.9rem;
+  background: rgba(12,10,7,0.6);
+  border: 1px solid var(--c-border);
+  border-radius: 40px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s, background 0.3s, transform 0.3s var(--ease-out);
+}
+.sound-toggle:hover { border-color: rgba(200,150,46,0.5); transform: translateY(-2px); }
+.sound-eq { display: flex; align-items: flex-end; gap: 2px; height: 14px; }
+.sound-eq span {
+  width: 2px; height: 4px;
+  background: var(--c-kodak);
+  transform-origin: bottom;
+}
+.sound-toggle.is-on .sound-eq span { animation: eq 0.9s ease-in-out infinite; }
+.sound-toggle.is-on .sound-eq span:nth-child(2) { animation-delay: 0.15s; }
+.sound-toggle.is-on .sound-eq span:nth-child(3) { animation-delay: 0.3s; }
+.sound-toggle.is-on .sound-eq span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes eq {
+  0%,100% { height: 4px; }
+  50%     { height: 14px; }
+}
+.sound-label {
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--c-mid); white-space: nowrap;
+}
+.sound-toggle.is-on .sound-label { color: var(--c-cream); }
+@media (max-width: 640px) {
+  .sound-toggle { bottom: 1rem; right: 1rem; padding: 0.5rem 0.7rem; }
+  .sound-label { display: none; }
+}
+
+/* ─────────────────────────────────────────
+   SCENE REVEAL — cinematic section entrances
+   (JS adds .scene + toggles .is-in)
+───────────────────────────────────────── */
+.scene { position: relative; }
+.scene-wipe {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--c-black) 0%, #120d06 50%, var(--c-black) 100%);
+  z-index: 40; pointer-events: none;
+  transform: scaleY(1); transform-origin: top;
+}
+
+/* Hero camera-pullback target */
+.hero-content, .hero-stats { will-change: transform, opacity; }
+
+/* ─────────────────────────────────────────
+   REDUCED MOTION — respect the viewer
+───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .atmos-haze, .atmos-beam, .atmos-fog, .dust-field span,
+  .marquee-track, .hero-lens-flare, .film-award-glow,
+  .sound-toggle.is-on .sound-eq span, .sc-thumb { animation: none !important; }
+  .atmos-haze, .atmos-beam, .atmos-fog { opacity: 0.3 !important; }
+  .reel { height: auto; }
+  .reel-stage { height: auto; min-height: 80vh; padding: 8rem 0; }
+  .reel-frame { width: 70vw; }
+  .reel-word { position: static; opacity: 1; margin-top: 2rem; }
+  .reel-bar { display: none; }
 }

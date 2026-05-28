@@ -3,143 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CineMan Productions — The Complete Filmography. National Award Winning Gujarati Cinema.">
+  <meta property="og:title" content="Films — CineMan Productions">
+  <meta property="og:description" content="Cinema that rewrote the rules of Gujarati storytelling.">
   <title>Films — CineMan Productions</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* ── Page Hero ── */
     .page-hero {
-      padding: calc(var(--nav-h) + 5rem) var(--pad-x) 5rem;
-      max-width: var(--max-w);
-      margin: 0 auto;
+      padding: calc(var(--nav-h) + 5rem) var(--pad-x) 4rem;
+      max-width: var(--max-w); margin: 0 auto;
       border-bottom: 1px solid var(--c-border);
     }
     .page-eyebrow {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;
     }
     .page-title {
       font-family: var(--font-mono);
       font-size: clamp(4rem, 10vw, 10rem);
-      color: var(--c-cream);
-      line-height: 0.9;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.5rem;
+      color: var(--c-cream); line-height: 0.9;
+      letter-spacing: -0.02em; margin-bottom: 1.5rem;
     }
-    .page-title span {
-      color: var(--c-projector);
-    }
+    .page-title span { color: var(--c-projector); }
     .page-sub {
-      font-family: var(--font-display);
-      font-style: italic;
-      font-size: 1.2rem;
-      color: var(--c-text-mid);
-      max-width: 500px;
+      font-family: var(--font-display); font-style: italic;
+      font-size: 1.15rem; color: var(--c-mid);
+      max-width: 520px; line-height: 1.65;
     }
+    /* ── Full Films Grid ── */
     .films-full-grid {
-      max-width: var(--max-w);
-      margin: 0 auto;
+      max-width: var(--max-w); margin: 0 auto;
       padding: 5rem var(--pad-x);
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5px;
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
     }
-    @media (max-width: 768px) {
-      .films-full-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 768px) { .films-full-grid { grid-template-columns: 1fr; } }
     .film-full-card {
-      position: relative;
-      min-height: 500px;
-      overflow: hidden;
-      padding: 2.5rem;
-      display: flex;
-      flex-direction: column;
+      position: relative; min-height: 560px; overflow: hidden;
+      padding: 2.5rem; display: flex; flex-direction: column;
       justify-content: flex-end;
     }
     .film-full-bg {
-      position: absolute;
-      inset: 0;
-      transition: transform 0.8s cubic-bezier(0.76, 0, 0.24, 1);
+      position: absolute; inset: 0;
+      transition: transform 0.8s cubic-bezier(0.76,0,0.24,1);
     }
-    .film-full-card:hover .film-full-bg {
-      transform: scale(1.05);
-    }
+    .film-full-card:hover .film-full-bg { transform: scale(1.05); }
     .film-full-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(0deg, rgba(8,7,5,0.92) 0%, rgba(8,7,5,0.2) 60%, transparent 100%);
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(0deg, rgba(5,4,3,0.96) 0%, rgba(5,4,3,0.5) 50%, rgba(5,4,3,0.2) 100%);
     }
-    .film-full-content {
-      position: relative;
-      z-index: 2;
-    }
+    .film-full-content { position: relative; z-index: 2; }
     .film-full-num {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--c-text-muted);
-      letter-spacing: 0.2em;
-      margin-bottom: 1rem;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      color: var(--c-text-muted); letter-spacing: 0.2em;
+      margin-bottom: 1rem; color: var(--c-muted);
     }
     .film-full-title {
       font-family: var(--font-display);
-      font-size: clamp(2rem, 3.5vw, 3rem);
-      font-weight: 900;
-      color: var(--c-cream);
-      line-height: 1.05;
-      margin-bottom: 0.75rem;
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 900; color: var(--c-cream);
+      line-height: 1.05; margin-bottom: 0.75rem;
     }
     .film-full-title em { color: var(--c-projector); font-style: italic; }
     .film-full-meta {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
+      display: flex; gap: 1rem; align-items: center;
+      margin-bottom: 1rem; flex-wrap: wrap;
     }
-    .film-full-year {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--c-kodak);
-    }
+    .film-full-year { font-family: var(--font-mono); font-size: 0.8rem; color: var(--c-kodak); }
     .film-full-genre {
-      font-size: 0.7rem;
-      color: var(--c-text-muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      font-size: 0.68rem; color: var(--c-muted);
+      letter-spacing: 0.1em; text-transform: uppercase;
     }
     .film-full-desc {
-      font-size: 0.9rem;
-      color: var(--c-text-mid);
-      line-height: 1.65;
-      margin-bottom: 1.5rem;
-      max-width: 380px;
+      font-size: 0.9rem; color: var(--c-mid);
+      line-height: 1.65; margin-bottom: 1.5rem; max-width: 400px;
     }
+    .film-full-links { display: flex; gap: 0.6rem; flex-wrap: wrap; }
   </style>
 </head>
 <body>
-  <canvas id="grain-canvas" aria-hidden="true"></canvas>
-  <div class="cursor-dot" id="cursor-dot"></div>
-  <div class="cursor-ring" id="cursor-ring"></div>
-  <div class="cursor-label" id="cursor-label">VIEW</div>
 
+  <!-- GRAIN -->
+  <canvas id="grain-canvas" aria-hidden="true"></canvas>
+
+  <!-- CURSOR -->
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-label" id="cursor-label" aria-hidden="true">VIEW</div>
+
+  <!-- FULLSCREEN MENU -->
+  <div class="menu-overlay" id="menu-overlay">
+    <div class="menu-inner">
+      <nav class="menu-nav">
+        <a href="index.html#films"     class="menu-link"><span class="ml-idx">01</span><span class="ml-text">Films</span></a>
+        <a href="index.html#work"      class="menu-link"><span class="ml-idx">02</span><span class="ml-text">Commercials</span></a>
+        <a href="index.html#directors" class="menu-link"><span class="ml-idx">03</span><span class="ml-text">Directors</span></a>
+        <a href="index.html#cast"      class="menu-link"><span class="ml-idx">04</span><span class="ml-text">Ensemble</span></a>
+        <a href="index.html#studio"    class="menu-link"><span class="ml-idx">05</span><span class="ml-text">Studio</span></a>
+        <a href="index.html#awards"    class="menu-link"><span class="ml-idx">06</span><span class="ml-text">Awards</span></a>
+        <a href="index.html#journal"   class="menu-link"><span class="ml-idx">07</span><span class="ml-text">Journal</span></a>
+        <a href="index.html#contact"   class="menu-link"><span class="ml-idx">08</span><span class="ml-text">Contact</span></a>
+      </nav>
+      <div class="menu-meta">
+        <p>National Award Winning · OTT Pioneers · Ahmedabad</p>
+        <a href="mailto:hello@cineman.in">hello@cineman.in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
   <nav class="nav is-scrolled" id="nav">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo">
-        <span class="nav-logo-mark">C</span><span class="nav-logo-text">INEMAN</span>
+      <div class="nav-center-group">
+        <ul class="nav-links" role="list">
+          <li><a href="index.html#films" class="nav-link">Films</a></li>
+          <li><a href="index.html#work"  class="nav-link">Work</a></li>
+        </ul>
+        <a href="index.html" class="nav-logo" aria-label="CineMan Productions">
+          <img src="assets/logo.svg" alt="CineMan Productions" class="nav-logo-img">
+        </a>
+        <ul class="nav-links" role="list">
+          <li><a href="index.html#studio"    class="nav-link">Studio</a></li>
+          <li><a href="index.html#directors" class="nav-link">Directors</a></li>
+        </ul>
+      </div>
+      <a href="index.html" class="nav-mobile-logo" aria-label="CineMan Productions">
+        <img src="assets/logo.svg" alt="CineMan Productions">
       </a>
-      <ul class="nav-links" role="list">
-        <li><a href="films.html" class="nav-link" style="color: var(--c-cream);">Films</a></li>
-        <li><a href="index.html#work" class="nav-link">Work</a></li>
-        <li><a href="index.html#studio" class="nav-link">Studio</a></li>
-        <li><a href="index.html#directors" class="nav-link">Directors</a></li>
-      </ul>
       <div class="nav-end">
         <a href="index.html#contact" class="nav-cta">Let's Create</a>
         <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
@@ -151,6 +149,7 @@
   </nav>
 
   <main>
+
     <div class="page-hero">
       <div class="page-eyebrow">
         <span class="eyebrow-line"></span>
@@ -163,79 +162,115 @@
     <div class="films-full-grid">
 
       <article class="film-full-card">
-        <div class="film-full-bg" style="background: linear-gradient(160deg, #0f0800, #2a1500, #1a0d00);"></div>
+        <div class="film-full-bg" style="background:linear-gradient(160deg,#0f0800,#2a1500,#1a0d00);"></div>
         <div class="film-full-content">
-          <div class="film-full-num">01 — 2012</div>
+          <div class="film-full-num">01 · 2012</div>
           <h2 class="film-full-title">Kevi Rite<br><em>Jaish</em></h2>
           <div class="film-full-meta">
             <span class="film-full-year">2012</span>
             <span class="film-full-genre">Comedy · Romance · Drama</span>
           </div>
-          <p class="film-full-desc">The film that restarted Gujarati cinema. A love story between two ambitious young people from Ahmedabad, told with warmth, wit, and visual precision that had never been seen in the language before. This was not just a movie — it was a movement.</p>
-          <a href="#" class="link-arrow">Explore Film <span>→</span></a>
+          <p class="film-full-desc">The film that restarted Gujarati cinema. A love story between two ambitious young people from Ahmedabad, told with warmth, wit, and visual precision that the language had never seen before. Not just a movie — a movement.</p>
+          <div class="film-full-links">
+            <a href="https://en.wikipedia.org/wiki/Kevi_Rite_Jaish" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">W</span> Wikipedia</a>
+            <a href="https://www.imdb.com/title/tt2315108/" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">★</span> IMDb</a>
+          </div>
         </div>
       </article>
 
       <article class="film-full-card">
-        <div class="film-full-bg" style="background: linear-gradient(160deg, #080a00, #1e2200, #12160a);"></div>
+        <div class="film-full-bg" style="background:linear-gradient(160deg,#080a00,#1e2200,#12160a);"></div>
         <div class="film-full-content">
-          <div class="film-full-num">02 — 2014</div>
+          <div class="film-full-num">02 · 2014</div>
           <h2 class="film-full-title">Bey<br><em>Yaar</em></h2>
           <div class="film-full-meta">
             <span class="film-full-year">2014</span>
             <span class="film-full-genre">Drama · Friendship</span>
           </div>
           <p class="film-full-desc">A film about what friendship really costs. Two men, thirty years, and the invisible weight of the choices we make for the people we love. Mikhil Musale's directorial statement — intimate, aching, and deeply human.</p>
-          <a href="#" class="link-arrow">Explore Film <span>→</span></a>
+          <div class="film-full-links">
+            <a href="https://en.wikipedia.org/wiki/Bey_Yaar" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">W</span> Wikipedia</a>
+            <a href="https://www.imdb.com/title/tt3811244/" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">★</span> IMDb</a>
+          </div>
         </div>
       </article>
 
-      <article class="film-full-card" style="border-top: 2px solid var(--c-kodak);">
-        <div class="film-full-bg" style="background: linear-gradient(160deg, #080400, #1a0e00, #100800);"></div>
+      <article class="film-full-card" style="border-top:2px solid var(--c-kodak);">
+        <div class="film-full-bg" style="background:linear-gradient(160deg,#080400,#1a0e00,#100800);"></div>
         <div class="film-full-content">
-          <div class="film-full-num">03 — 2016 · NATIONAL AWARD ◆</div>
+          <div class="film-full-num">03 · 2016 · NATIONAL AWARD ◆</div>
           <h2 class="film-full-title">Wrong Side<br><em>Raju</em></h2>
           <div class="film-full-meta">
-            <span class="film-full-year" style="color: var(--c-projector);">National Award 2017</span>
+            <span class="film-full-year" style="color:var(--c-projector);">National Award 2017</span>
             <span class="film-full-genre">Drama · Social · Legal</span>
           </div>
-          <p class="film-full-desc">India's National Award for Best Gujarati Film. The story of a road accident that sets off a chain of events exposing the fault lines of class, justice, and culpability in modern Gujarat. Abhishek Jain at his most morally uncompromising.</p>
-          <a href="#" class="link-arrow">Explore Film <span>→</span></a>
+          <p class="film-full-desc">India's National Award for Best Gujarati Film. A road accident sets off a chain of events exposing the fault lines of class, justice, and culpability in modern Gujarat. Abhishek Jain at his most morally uncompromising.</p>
+          <div class="film-full-links">
+            <a href="https://en.wikipedia.org/wiki/Wrong_Side_Raju" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">W</span> Wikipedia</a>
+            <a href="https://www.imdb.com/title/tt4846226/" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">★</span> IMDb</a>
+            <a href="case-study.html" class="film-ext-link film-ext-link--go">Case Study →</a>
+          </div>
         </div>
       </article>
 
       <article class="film-full-card">
-        <div class="film-full-bg" style="background: linear-gradient(160deg, #00080f, #001822, #000d18);"></div>
+        <div class="film-full-bg" style="background:linear-gradient(160deg,#00080f,#001822,#000d18);"></div>
         <div class="film-full-content">
-          <div class="film-full-num">04 — Ongoing</div>
-          <h2 class="film-full-title">OHO<br><em>Gujarati</em></h2>
+          <div class="film-full-num">04 · 2017</div>
+          <h2 class="film-full-title">Vitthal<br><em>Teedi</em></h2>
           <div class="film-full-meta">
-            <span class="film-full-year" style="color: var(--c-projector);">OTT Platform · 2021</span>
-            <span class="film-full-genre">Streaming · Original Content</span>
+            <span class="film-full-year">2017</span>
+            <span class="film-full-genre">Drama · Folk</span>
           </div>
-          <p class="film-full-desc">When cinema becomes a platform. CineMan's co-creation of OHO Gujarati — the first dedicated streaming service for Gujarati content — brought the vision full circle: every story deserves a screen, and every screen deserves a story worth telling.</p>
-          <a href="#" class="link-arrow">Explore Platform <span>→</span></a>
+          <p class="film-full-desc">A compelling character study set against the rich backdrop of Gujarati folk tradition. CineMan deepening its dramatic voice — intimate, rooted, and formally precise.</p>
+          <div class="film-full-links">
+            <a href="https://en.wikipedia.org/wiki/Vitthal_Teedi" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">W</span> Wikipedia</a>
+            <a href="https://www.imdb.com/title/tt5698782/" target="_blank" rel="noopener" class="film-ext-link"><span class="fel-icon">★</span> IMDb</a>
+          </div>
         </div>
       </article>
 
     </div>
+
   </main>
 
-  <footer class="footer">
-    <div class="footer-bottom" style="margin-top: 0; padding-top: 2rem;">
-      <p class="footer-copy">© 2024 CineMan Productions. All Rights Reserved.</p>
-      <a href="index.html" class="footer-craft" style="color: var(--c-kodak);">← Back to Home</a>
+  <!-- FOOTER -->
+  <footer class="footer" id="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/logo.svg" alt="CineMan Productions" class="footer-logo-img">
+        <p class="footer-tagline">A Cinematic Storytelling Universe</p>
+        <p class="footer-est">Est. 2010 · Ahmedabad, India</p>
+      </div>
+      <div class="footer-nav-grid">
+        <div class="footer-col">
+          <h4 class="fc-title">Studio</h4>
+          <a href="index.html#studio"    class="fc-link">About</a>
+          <a href="index.html#directors" class="fc-link">Directors</a>
+          <a href="index.html#awards"    class="fc-link">Awards</a>
+          <a href="index.html#contact"   class="fc-link">Careers</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="fc-title">Work</h4>
+          <a href="films.html"           class="fc-link">All Films</a>
+          <a href="index.html#work"      class="fc-link">Commercials</a>
+          <a href="case-study.html"      class="fc-link">Case Studies</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="fc-title">Connect</h4>
+          <a href="https://www.instagram.com/cinemanproductions" target="_blank" rel="noopener" class="fc-link">Instagram</a>
+          <a href="https://www.linkedin.com/company/cinemanofficial/" target="_blank" rel="noopener" class="fc-link">LinkedIn</a>
+          <a href="https://en.wikipedia.org/wiki/CineMan_Productions" target="_blank" rel="noopener" class="fc-link">Wikipedia</a>
+          <a href="mailto:hello@cineman.in" class="fc-link">Email</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2024 CineMan Productions Ltd. All Rights Reserved.</p>
+      <p class="footer-craft">Crafted for the cinema.</p>
     </div>
   </footer>
 
   <script src="js/main.js"></script>
-  <script>
-    // Override loader for inner pages
-    document.addEventListener('DOMContentLoaded', () => {
-      const loader = document.getElementById('loader');
-      if (loader) loader.style.display = 'none';
-      document.body.style.overflow = '';
-    });
-  </script>
 </body>
 </html>
