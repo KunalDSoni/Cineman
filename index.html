@@ -22,6 +22,19 @@
   <!-- GRAIN -->
   <canvas id="grain-canvas" aria-hidden="true"></canvas>
 
+  <!-- PERSISTENT CINEMATIC ATMOSPHERE — the whole site lives inside a lens -->
+  <div class="atmosphere" aria-hidden="true">
+    <div class="atmos-beam"></div>
+    <div class="atmos-haze"></div>
+    <div class="atmos-vignette"></div>
+  </div>
+
+  <!-- SOUND TOGGLE — opt-in projector ambience -->
+  <button class="sound-toggle" id="sound-toggle" aria-label="Toggle cinematic sound" aria-pressed="false">
+    <span class="sound-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+    <span class="sound-label" id="sound-label">Sound Off</span>
+  </button>
+
   <!-- CURSOR -->
   <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
   <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
@@ -32,6 +45,7 @@
   ══════════════════════════════════════════ -->
   <div class="loader" id="loader" aria-hidden="true">
     <div class="loader-bg"></div>
+    <div class="loader-flash" id="loader-flash"></div>
     <div class="loader-perfs loader-perfs--top">
       <span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span>
@@ -55,6 +69,7 @@
       <div class="loader-logo-wrap" id="loader-logo-wrap">
         <img src="assets/logo.svg" alt="CineMan Productions" class="loader-logo-img">
         <span class="loader-est">EST. 2010 · AHMEDABAD · INDIA</span>
+        <span class="loader-credit" id="loader-credit"></span>
       </div>
     </div>
 
@@ -240,6 +255,33 @@
           how a region saw itself on screen.
         </p>
         <span class="manifesto-rule"></span>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         THE REEL — "Enter the Frame" signature moment
+         A pinned, scroll-scrubbed sequence: a single
+         film frame opens from the dark to fullscreen.
+    ══════════════════════════════════════════ -->
+    <section class="reel" id="reel" aria-label="Cinematic interlude">
+      <div class="reel-stage" id="reel-stage">
+        <p class="reel-credit" id="reel-credit"><em>CineMan</em> &nbsp;·&nbsp; A Motion Picture Studio</p>
+
+        <h2 class="reel-word" id="reel-word">Every frame<br>a <em>feeling.</em></h2>
+
+        <div class="reel-frame" id="reel-frame">
+          <div class="reel-frame-bg"></div>
+          <div class="reel-frame-grade"></div>
+          <span class="reel-corner tl"></span>
+          <span class="reel-corner tr"></span>
+          <span class="reel-corner bl"></span>
+          <span class="reel-corner br"></span>
+        </div>
+
+        <span class="reel-timecode" id="reel-timecode">00:00:00:01</span>
+
+        <div class="reel-bar reel-bar--top" id="reel-bar-top"></div>
+        <div class="reel-bar reel-bar--bottom" id="reel-bar-bottom"></div>
       </div>
     </section>
 

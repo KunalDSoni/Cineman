@@ -15,6 +15,38 @@ let lenis = null;
 let currentWork = 0;
 const TOTAL_WORK = 3;
 
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Type text out character-by-character (opening-credit feel) */
+function typeText(el, text, speed = 45) {
+  if (!el) return;
+  el.style.opacity = '1';
+  el.textContent = '';
+  let i = 0;
+  const id = setInterval(() => {
+    el.textContent = text.slice(0, ++i);
+    if (i >= text.length) clearInterval(id);
+  }, speed);
+}
+
+/* Guaranteed hero-visible fail-safe — never let the opening strand the hero */
+function forceHeroVisible() {
+  $$('.hero-line .char').forEach(c => {
+    c.classList.add('is-visible');
+    c.style.opacity = '1';
+    c.style.filter = 'none';
+    c.style.transform = 'none';
+  });
+  ['#hero-eyebrow', '#hero-sub', '#hero-actions'].forEach(s => {
+    const e = $(s);
+    if (e) { e.style.opacity = '1'; e.style.transform = 'none'; }
+  });
+  $$('.hstat').forEach(e => { e.style.opacity = '1'; e.style.transform = 'none'; });
+  $$('.hstat-div').forEach(e => { e.style.opacity = '1'; });
+  const sc = $('.hero-scroll-cue');
+  if (sc) sc.style.opacity = '1';
+}
+
 /* ─────────────────────────────────────────
    1. FILM GRAIN CANVAS (overlay on everything)
 ───────────────────────────────────────── */
@@ -374,21 +406,31 @@ function initLoader() {
               opacity: 1, scale: 1, duration: 0.8, ease: 'power3.out',
             });
           }
+          setTimeout(() => typeText($('#loader-credit'), 'A CINEMATIC UNIVERSE', 42), 450);
         }, 300);
       }
     });
   }, 2100);
 
-  // Exit loader
+  // Exit loader — projector strikes: hero begins under a flash of lamp-light,
+  // then the flash clears to reveal the title already forming.
   setTimeout(() => {
-    gsap.to(loader, {
-      opacity: 0, duration: 0.9, ease: 'power2.inOut',
-      onComplete: () => {
-        loader.style.display = 'none';
-        document.body.style.overflow = '';
-        initHeroReveal();
-      }
-    });
+    const flash = $('#loader-flash');
+    const finish = () => {
+      loader.style.display = 'none';
+      document.body.style.overflow = '';
+    };
+    initHeroReveal();
+
+    if (flash) {
+      gsap.timeline()
+        .to(flash,  { opacity: 1, duration: 0.16, ease: 'power2.in' })
+        .to(loader, { opacity: 0, duration: 0.55, ease: 'power2.inOut' }, '-=0.02')
+        .to(flash,  { opacity: 0, duration: 0.55, ease: 'power2.out' }, '-=0.35')
+        .add(finish, '-=0.25');
+    } else {
+      gsap.to(loader, { opacity: 0, duration: 0.7, ease: 'power2.inOut', onComplete: finish });
+    }
   }, 3400);
 }
 
@@ -493,6 +535,11 @@ function splitLine(el) {
 }
 
 function initHeroReveal() {
+  if (window.__heroRevealed) return;
+  window.__heroRevealed = true;
+
+  if (REDUCED) { forceHeroVisible(); return; }
+
   const eyebrow = $('#hero-eyebrow');
   const lines   = [
     { el: $('#hl-1'), delay: 0.1 },
@@ -852,6 +899,206 @@ function initFooter() {
 }
 
 /* ─────────────────────────────────────────
+   17. CINEMATIC SOUND — opt-in projector ambience
+   Generated with Web Audio (no assets). Projector
+   hum + detuned drone + soft sprocket ticks.
+───────────────────────────────────────── */
+function initSound() {
+  const btn   = $('#sound-toggle');
+  const label = $('#sound-label');
+  if (!btn) return;
+
+  let ctx = null, master = null, on = false, ticking = false;
+
+  function build() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0;
+    master.connect(ctx.destination);
+
+    // Projector hum — low triangle + harmonic, motor-like amplitude wobble
+    const hum = ctx.createOscillator();   hum.type = 'triangle'; hum.frequency.value = 58;
+    const humGain = ctx.createGain();      humGain.gain.value = 0.12;
+    const lfo = ctx.createOscillator();    lfo.type = 'sine';     lfo.frequency.value = 7.5;
+    const lfoGain = ctx.createGain();      lfoGain.gain.value = 0.045;
+    lfo.connect(lfoGain); lfoGain.connect(humGain.gain);
+    hum.connect(humGain); humGain.connect(master);
+
+    const hum2 = ctx.createOscillator();   hum2.type = 'sine'; hum2.frequency.value = 116;
+    const hum2Gain = ctx.createGain();     hum2Gain.gain.value = 0.045;
+    hum2.connect(hum2Gain); hum2Gain.connect(master);
+
+    // Tension drone — two slightly detuned saws through a soft lowpass
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.7;
+    const d1 = ctx.createOscillator(); d1.type = 'sawtooth'; d1.frequency.value = 82.0;
+    const d2 = ctx.createOscillator(); d2.type = 'sawtooth'; d2.frequency.value = 82.4;
+    const dGain = ctx.createGain(); dGain.gain.value = 0.04;
+    d1.connect(dGain); d2.connect(dGain); dGain.connect(lp); lp.connect(master);
+
+    [hum, lfo, hum2, d1, d2].forEach(o => o.start());
+    return true;
+  }
+
+  function startTicks() {
+    if (ticking) return;
+    ticking = true;
+    const tick = () => {
+      if (!on || !ctx) { ticking = false; return; }
+      const dur = 0.03;
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 2200; bp.Q.value = 0.9;
+      const g = ctx.createGain(); g.gain.value = 0.05;
+      src.connect(bp); bp.connect(g); g.connect(master); src.start();
+      setTimeout(tick, 470 + Math.random() * 230);
+    };
+    tick();
+  }
+
+  function setOn(v) {
+    on = v;
+    if (on) {
+      if (!ctx && !build()) return;
+      if (ctx.state === 'suspended') ctx.resume();
+      gsap.to(master.gain, { value: 0.5, duration: 1.4, ease: 'power2.out' });
+      startTicks();
+      btn.classList.add('is-on');
+      btn.setAttribute('aria-pressed', 'true');
+      if (label) label.textContent = 'Sound On';
+    } else {
+      if (master) gsap.to(master.gain, { value: 0, duration: 0.8, ease: 'power2.in' });
+      btn.classList.remove('is-on');
+      btn.setAttribute('aria-pressed', 'false');
+      if (label) label.textContent = 'Sound Off';
+    }
+  }
+
+  btn.addEventListener('click', () => setOn(!on));
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx || !on) return;
+    document.hidden ? ctx.suspend() : ctx.resume();
+  });
+}
+
+/* ─────────────────────────────────────────
+   18. THE REEL — "Enter the Frame" pinned scrub
+───────────────────────────────────────── */
+function initReelSequence() {
+  const reel   = $('#reel');
+  const stage  = $('#reel-stage');
+  const frame  = $('#reel-frame');
+  const word   = $('#reel-word');
+  const credit = $('#reel-credit');
+  const tc     = $('#reel-timecode');
+  if (!reel || !stage || !frame || REDUCED) return;
+
+  gsap.set(frame, { scale: 0.32, transformOrigin: '50% 50%' });
+  gsap.set(word,   { opacity: 0, xPercent: 60 });
+  gsap.set(credit, { opacity: 1 });
+
+  const tl = gsap.timeline({
+    defaults: { ease: 'none' },
+    scrollTrigger: {
+      trigger: reel,
+      start: 'top top',
+      end: '+=220%',
+      scrub: 1,
+      pin: stage,
+      anticipatePin: 1,
+      onUpdate: self => {
+        if (!tc) return;
+        const f = Math.round(self.progress * 192);          // ~8s of film @24fps
+        const ss = String(Math.floor(f / 24)).padStart(2, '0');
+        const ff = String(f % 24).padStart(2, '0');
+        tc.textContent = `00:00:${ss}:${ff}`;
+      }
+    }
+  });
+
+  tl.to(credit, { opacity: 0, duration: 0.12 }, 0)
+    .to(frame,  { scale: 1.0, ease: 'power1.inOut', duration: 0.72 }, 0)
+    .fromTo(word, { opacity: 0, xPercent: 60 },
+                  { opacity: 1, xPercent: 0, ease: 'power2.out', duration: 0.30 }, 0.20)
+    .to(word,   { opacity: 0, xPercent: -60, ease: 'power2.in', duration: 0.30 }, 0.52)
+    .to(frame,  { scale: 1.06, ease: 'power1.in', duration: 0.28 }, 0.72);
+}
+
+/* ─────────────────────────────────────────
+   19. HERO — camera pulls back on scroll
+───────────────────────────────────────── */
+function initHeroPullback() {
+  if (REDUCED) return;
+  const content = $('.hero-content');
+  const stats   = $('.hero-stats');
+  if (content) {
+    gsap.to(content, {
+      yPercent: -14, scale: 0.92, opacity: 0, ease: 'none',
+      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 }
+    });
+  }
+  if (stats) {
+    gsap.to(stats, {
+      yPercent: -24, opacity: 0, ease: 'none',
+      scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 }
+    });
+  }
+}
+
+/* ─────────────────────────────────────────
+   20. ACT FLASHES — subtle reel-change pulse
+   between major scenes (like a projector cut)
+───────────────────────────────────────── */
+function initActFlashes() {
+  if (REDUCED) return;
+  const flash = document.createElement('div');
+  flash.style.cssText = `
+    position:fixed; inset:0; pointer-events:none; z-index:9990; opacity:0;
+    background:linear-gradient(180deg, rgba(228,180,74,0) 0%, rgba(228,180,74,0.09) 50%, rgba(228,180,74,0) 100%);
+  `;
+  document.body.appendChild(flash);
+
+  ['#films', '#cast', '#studio', '#directors', '#contact'].forEach(sel => {
+    const el = $(sel);
+    if (!el) return;
+    ScrollTrigger.create({
+      trigger: el, start: 'top 72%',
+      onEnter: () => gsap.fromTo(flash, { opacity: 0.1 }, { opacity: 0, duration: 0.7, ease: 'power2.out' })
+    });
+  });
+}
+
+/* ─────────────────────────────────────────
+   21. ATMOSPHERIC DUST — for dark scenes
+───────────────────────────────────────── */
+function initDust() {
+  if (REDUCED) return;
+  ['.statement-section', '#reel-stage'].forEach(sel => {
+    const host = $(sel);
+    if (!host) return;
+    const field = document.createElement('div');
+    field.className = 'dust-field';
+    field.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('span');
+      const dur = 12 + Math.random() * 16;
+      const size = 1 + Math.random() * 2;
+      s.style.left = (Math.random() * 100) + '%';
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.animationDuration = dur + 's';
+      s.style.animationDelay = (-Math.random() * dur) + 's';
+      field.appendChild(s);
+    }
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    host.insertBefore(field, host.firstChild);
+  });
+}
+
+/* ─────────────────────────────────────────
    MAIN INIT
 ───────────────────────────────────────── */
 function init() {
@@ -866,15 +1113,36 @@ function init() {
     initScrollProgress();
     initNav();
     initMenu();
+    initSound();             // opt-in cinematic ambience
+    initDust();              // atmospheric dust in dark scenes
     initScrollAnimations();
     initManifestoIlluminate();
+    initReelSequence();      // ░ signature "Enter the Frame" moment
+    initHeroPullback();      // camera pull-back on scroll
+    initActFlashes();        // reel-change pulses between acts
     initWorkCarousel();
     initMagneticButtons();
     initCardTilt();
     initMarquee();
     initFilmBurn();
     initFooter();
+
+    // Pinning changes document height — let everything settle, then refresh.
+    window.addEventListener('load', () => ScrollTrigger.refresh());
+    setTimeout(() => ScrollTrigger.refresh(), 600);
   });
+
+  // Fail-safe: the hero must never be stranded if the overture is interrupted
+  // (e.g. a throttled tab pausing rAF mid-transition).
+  setTimeout(() => {
+    initHeroReveal();
+    forceHeroVisible();
+    const loader = $('#loader');
+    if (loader && loader.style.display !== 'none') {
+      loader.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }, 6000);
 }
 
 init();
