@@ -664,6 +664,9 @@ const Haptics={
   },
   iosTick(){ if(this._sw){ try{ this._sw.click(); return true; }catch(e){} } return false; },
   buzz(pattern){ if(this.canVibrate){ try{ navigator.vibrate(pattern); return true; }catch(e){} } return false; },
+  // Android only: a real micro-buzz that DOES work mid-scroll (sticky activation persists
+  // after the first tap). iOS can't buzz on scroll — it needs a tap gesture — so this no-ops there.
+  scrollBuzz(){ if(this.canVibrate){ try{ navigator.vibrate(7); }catch(e){} } },
   _lastCue:0,
   cueTick(){ const now=(typeof performance!=='undefined'?performance.now():Date.now());
     if(now-this._lastCue<70) return; this._lastCue=now;   // debounce rapid hover/scroll
@@ -782,7 +785,8 @@ function startExperience(){
 }
 
 /* ═══════════ 5. THE REEL — velocity-scaled ticks + filmstrip ═══════════ */
-let reelVel=0, lastScrollUpdate=0;
+let reelVel=0, lastScrollUpdate=0, lastSprocketY=0;
+const SPROCKET_STEP=96;   // px of scroll between sprocket "clicks"
 function onReelScroll(e){
   // throttle to ~60ms; attack the reel rate from |velocity|
   const now=performance.now();
@@ -793,9 +797,21 @@ function onReelScroll(e){
   fsFill.style.transform='scaleY('+p+')';
   fsFrame.style.transform='translateY('+(p*(innerHeight-22))+'px)';
   if(now-lastScrollUpdate>90){ fsPct.textContent=String(Math.round(p*100)).padStart(2,'0')+'%'; lastScrollUpdate=now; }
+  // sprocket ratchet — a discrete "click" every SPROCKET_STEP px of scroll
+  const y=(typeof e.scroll==='number')?e.scroll:(window.scrollY||0);
+  if(Math.abs(y-lastSprocketY)>=SPROCKET_STEP){ lastSprocketY=y; sprocketPulse(); }
 }
 const fsFill=$('#fsFill'),fsFrame=$('#fsFrame'),fsPct=$('#fsPct');
 function reelDecay(){ reelVel*=0.93; engine.setReelRate(reelVel); requestAnimationFrame(reelDecay); }
+// fired once per sprocket of scroll: real buzz (Android) + a gold gate-flash on the rail.
+function sprocketPulse(){
+  Haptics.scrollBuzz();                 // Android: felt ratchet; iOS/desktop: silent (platform)
+  if(REDUCED) return;
+  // opacity + glow only — never touches transform, so it won't fight fsFrame's translateY.
+  gsap.killTweensOf(fsFrame);
+  gsap.fromTo(fsFrame,{opacity:.55,boxShadow:'0 0 0px rgba(200,150,46,0)'},
+    {opacity:1,boxShadow:'0 0 12px rgba(200,150,46,.85)',duration:.07,yoyo:true,repeat:1,ease:'power2.out'});
+}
 let tickTimer=null, wrapped=false;
 function startTicks(){
   clearTimeout(tickTimer);
