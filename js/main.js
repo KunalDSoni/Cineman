@@ -408,16 +408,29 @@ function initLenis() {
   gsap.ticker.add(t => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);
 
-  // Smooth anchor scrolling
-  $$('a[href^="#"]').forEach(link => {
-    link.addEventListener('click', e => {
-      const target = $(link.getAttribute('href'));
-      if (target) {
-        e.preventDefault();
-        lenis.scrollTo(target, { offset: -80, duration: 2.2 });
-        if ($('#menu-overlay')?.classList.contains('is-open')) toggleMenu(false);
-      }
-    });
+  // Single delegated listener — handles nav links AND menu links reliably
+  document.addEventListener('click', e => {
+    const link = e.target.closest('a[href^="#"]');
+    if (!link) return;
+
+    const hash   = link.getAttribute('href');
+    const target = document.querySelector(hash);
+    if (!target) return;
+
+    e.preventDefault();
+
+    const menuOpen = document.getElementById('menu-overlay')
+                              ?.classList.contains('is-open');
+
+    if (menuOpen) {
+      // Close menu first, then scroll after transition completes
+      toggleMenu(false);
+      setTimeout(() => {
+        lenis.scrollTo(target, { offset: -80, duration: 1.8 });
+      }, 420);
+    } else {
+      lenis.scrollTo(target, { offset: -80, duration: 1.8 });
+    }
   });
 }
 

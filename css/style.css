@@ -1471,3 +1471,165 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   flex-wrap: wrap; gap: 1rem;
 }
 .footer-copy, .footer-craft { font-size: 0.72rem; color: var(--c-muted); letter-spacing: 0.04em; }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE — COMPREHENSIVE RESPONSIVE SYSTEM
+   Breakpoints: 860 tablet | 640 mobile | 420 small
+═══════════════════════════════════════════════════════ */
+
+/* ── MENU: scrollable, smaller type so all 8 fit ── */
+.menu-inner {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 640px) {
+  .menu-inner {
+    padding-top: 6rem;
+    padding-bottom: 2.5rem;
+  }
+  .ml-text {
+    font-size: clamp(1.6rem, 7vw, 2.4rem);
+  }
+  .menu-link {
+    padding: 0.5rem 0;
+  }
+  .menu-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+@media (max-width: 420px) {
+  .ml-text { font-size: 1.5rem; }
+  .menu-link { padding: 0.4rem 0; }
+}
+
+/* ── NAV: mobile centre-logo + burger only ── */
+@media (max-width: 860px) {
+  .nav-center-group { display: none; }
+  .nav-cta { display: none; }
+  /* Show a small logo mark on mobile via nav-end fallback */
+  .nav-inner {
+    justify-content: space-between;
+  }
+  /* Mobile logo — reintroduce a small left logo on mobile */
+  .nav-mobile-logo {
+    display: flex !important;
+  }
+}
+
+/* Mobile fallback logo (left, shown only when centre group is hidden) */
+.nav-mobile-logo {
+  display: none;
+  align-items: center;
+}
+.nav-mobile-logo img { height: 34px; width: auto; }
+
+/* ── HERO ── */
+@media (max-width: 640px) {
+  .hero-title { margin-bottom: 1.2rem; }
+  .hero-line {
+    font-size: clamp(3.2rem, 16vw, 5.5rem);
+    line-height: 0.9;
+  }
+  .hero-sub { font-size: 0.95rem; margin-bottom: 1.8rem; }
+  .hero-actions { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .hero-stats { display: none; }
+  .hero-scroll-cue { display: none; }
+  .hero-eyebrow { margin-bottom: 1.2rem; }
+  .hero-content {
+    padding-bottom: 4rem;
+  }
+}
+
+/* ── FILMS GRID ── */
+@media (max-width: 1100px) {
+  .films-grid { grid-template-columns: 1fr 1fr; }
+  .film-card--featured { min-height: 480px; }
+}
+@media (max-width: 600px) {
+  .films-grid { grid-template-columns: 1fr; gap: 1.5px; }
+  .film-card, .film-card--featured { min-height: 420px; }
+}
+
+/* ── CAST GRID ── */
+@media (max-width: 640px) {
+  .cast-grid { grid-template-columns: 1fr 1fr; gap: 1.5px; }
+}
+@media (max-width: 380px) {
+  .cast-grid { grid-template-columns: 1fr; }
+}
+
+/* ── WORK CAROUSEL ── */
+@media (max-width: 768px) {
+  .work-item,
+  .work-item.is-active {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    min-height: auto;
+  }
+  .work-visual { aspect-ratio: 16/9; }
+  .work-showcase { min-height: auto; }
+}
+
+/* ── MANIFESTO ── */
+@media (max-width: 640px) {
+  .manifesto { padding: 6rem var(--pad-x); }
+  .manifesto-text { font-size: clamp(2rem, 8vw, 3rem); }
+}
+
+/* ── STUDIO / TIMELINE ── */
+@media (max-width: 900px) {
+  .studio-layout { grid-template-columns: 1fr; gap: 3rem; }
+  .timeline { padding-top: 0; }
+}
+
+/* ── DIRECTORS ── */
+@media (max-width: 640px) {
+  .directors-grid { grid-template-columns: 1fr; }
+}
+
+/* ── AWARDS ── */
+@media (max-width: 640px) {
+  .awards-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+  .awards-headline { font-size: 3rem; }
+}
+
+/* ── SERVICES ── */
+@media (max-width: 640px) {
+  .services-grid { grid-template-columns: 1fr; }
+  .service-item { border-bottom: none; }
+}
+
+/* ── JOURNAL ── */
+@media (max-width: 640px) {
+  .journal-grid { grid-template-columns: 1fr; }
+}
+
+/* ── CONTACT ── */
+@media (max-width: 640px) {
+  .contact-headline { font-size: clamp(2.2rem, 9vw, 4rem); }
+  .contact-bg-word { display: none; }
+}
+
+/* ── FOOTER ── */
+@media (max-width: 640px) {
+  .footer-top { grid-template-columns: 1fr; gap: 2.5rem; }
+  .footer-nav-grid { grid-template-columns: repeat(2, 1fr); gap: 2rem; }
+}
+
+/* ── GENERAL SECTION PADDING REDUCTION ── */
+@media (max-width: 640px) {
+  .films-section,
+  .cast-section,
+  .work-section,
+  .studio-section,
+  .directors-section,
+  .awards-section,
+  .services-section,
+  .journal-section,
+  .contact-section { padding: 5rem 0; }
+  .manifesto { padding: 5rem var(--pad-x); }
+  .statement-section { padding: 6rem var(--pad-x); }
+  .section-header { margin-bottom: 2.5rem; }
+}
