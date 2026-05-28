@@ -120,8 +120,11 @@
     ══════════════════════════════════════════ -->
     <section class="hero" id="hero">
 
-      <!-- YouTube Video Background -->
-      <div class="hero-video-wrap" aria-hidden="true">
+      <!-- Cinematic Canvas Fallback (always visible behind video) -->
+      <canvas id="hero-canvas" aria-hidden="true"></canvas>
+
+      <!-- YouTube Video Background (shown only when embedding works) -->
+      <div class="hero-video-wrap" id="hero-video-wrap" aria-hidden="true">
         <iframe
           id="hero-video"
           src="https://www.youtube.com/embed/K-rKRE4ksiE?autoplay=1&mute=1&loop=1&playlist=K-rKRE4ksiE&controls=0&showinfo=0&rel=0&enablejsapi=1&playsinline=1&disablekb=1&modestbranding=1&iv_load_policy=3&fs=0&color=white&cc_load_policy=0"

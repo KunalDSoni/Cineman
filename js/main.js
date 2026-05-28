@@ -16,7 +16,7 @@ let currentWork = 0;
 const TOTAL_WORK = 3;
 
 /* ─────────────────────────────────────────
-   1. FILM GRAIN CANVAS
+   1. FILM GRAIN CANVAS (overlay on everything)
 ───────────────────────────────────────── */
 function initGrain() {
   const canvas = $('#grain-canvas');
@@ -44,6 +44,209 @@ function initGrain() {
   resize();
   window.addEventListener('resize', resize, { passive: true });
   draw();
+}
+
+/* ─────────────────────────────────────────
+   1b. CINEMATIC CANVAS HERO BACKGROUND
+   Projector-in-dark-theatre atmosphere.
+   Always renders — YouTube layers on top when available.
+───────────────────────────────────────── */
+function initCinematicCanvas() {
+  const canvas = $('#hero-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0;
+  let t = 0;
+  let mouse = { x: 0.78, y: 0.12 };
+
+  // Dust particles in projector beam
+  let particles = [];
+
+  function spawnParticles() {
+    particles = Array.from({ length: 70 }, () => ({
+      x:     Math.random(),
+      y:     Math.random(),
+      r:     Math.random() * 1.4 + 0.3,
+      vx:    (Math.random() - 0.5) * 0.00012,
+      vy:   -(Math.random() * 0.00025 + 0.00008),
+      o:     Math.random() * 0.55 + 0.1,
+      phase: Math.random() * Math.PI * 2,
+    }));
+  }
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth  || window.innerWidth;
+    H = canvas.height = canvas.offsetHeight || window.innerHeight;
+    spawnParticles();
+  }
+
+  document.addEventListener('mousemove', e => {
+    mouse.x = e.clientX / W;
+    mouse.y = e.clientY / H;
+  }, { passive: true });
+
+  function drawFrame(ts) {
+    t = ts;
+    ctx.clearRect(0, 0, W, H);
+
+    // ── Deep cinematic black base
+    ctx.fillStyle = '#050403';
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Projector cone from upper-right
+    const srcX = W * 0.84;
+    const srcY = H * (-0.06);
+
+    // Organic flicker
+    const flicker =
+      0.88 +
+      0.07 * Math.sin(t * 0.000023 * 97.3) +
+      0.04 * Math.cos(t * 0.000023 * 43.1) +
+      (Math.random() > 0.97 ? (Math.random() - 0.5) * 0.04 : 0);
+
+    // Draw cone via clipping path
+    ctx.save();
+    ctx.beginPath();
+    const coneLen = H * 1.7;
+    const halfAngle = 0.38;
+    const coneDir = Math.PI * 0.66;
+    ctx.moveTo(srcX, srcY);
+    ctx.lineTo(
+      srcX + Math.cos(coneDir + halfAngle) * coneLen,
+      srcY + Math.sin(coneDir + halfAngle) * coneLen
+    );
+    ctx.lineTo(
+      srcX + Math.cos(coneDir - halfAngle) * coneLen,
+      srcY + Math.sin(coneDir - halfAngle) * coneLen
+    );
+    ctx.closePath();
+    ctx.clip();
+
+    const grad = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, coneLen);
+    grad.addColorStop(0,   `rgba(228,180,74,${0.20 * flicker})`);
+    grad.addColorStop(0.18,`rgba(200,150,46,${0.12 * flicker})`);
+    grad.addColorStop(0.5, `rgba(150,100,25,${0.05 * flicker})`);
+    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // ── Warm ambient bottom fill
+    const bot = ctx.createLinearGradient(0, H * 0.5, 0, H);
+    bot.addColorStop(0, 'rgba(0,0,0,0)');
+    bot.addColorStop(1, 'rgba(60,30,5,0.08)');
+    ctx.fillStyle = bot;
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Dust particles
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.phase += 0.018;
+      if (p.y < -0.05) p.y = 1.05;
+      if (p.x < -0.05) p.x = 1.05;
+      if (p.x >  1.05) p.x = -0.05;
+
+      const inBeam = p.x > 0.28 && p.x < 1.0 && p.y < 0.85;
+      if (!inBeam) return;
+
+      const flick = 0.4 + 0.6 * Math.abs(Math.sin(p.phase));
+      ctx.beginPath();
+      ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(228,180,74,${p.o * flick * 0.32})`;
+      ctx.fill();
+    });
+
+    // ── Anamorphic lens flare — thin horizontal amber streak
+    const fy     = H * 0.13;
+    const fAlpha = 0.07 + 0.025 * Math.sin(t * 0.0009);
+
+    const fGrad = ctx.createLinearGradient(0, fy, W, fy);
+    fGrad.addColorStop(0,    'rgba(228,180,74,0)');
+    fGrad.addColorStop(0.28, `rgba(228,180,74,${fAlpha})`);
+    fGrad.addColorStop(0.5,  `rgba(255,215,120,${fAlpha * 1.5})`);
+    fGrad.addColorStop(0.72, `rgba(228,180,74,${fAlpha})`);
+    fGrad.addColorStop(1,    'rgba(228,180,74,0)');
+
+    ctx.strokeStyle = fGrad;
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
+
+    // Thin secondary streak
+    const fGrad2 = ctx.createLinearGradient(0, fy + 3, W, fy + 3);
+    fGrad2.addColorStop(0.35, 'rgba(200,150,46,0)');
+    fGrad2.addColorStop(0.5,  `rgba(200,150,46,${fAlpha * 0.45})`);
+    fGrad2.addColorStop(0.65, 'rgba(200,150,46,0)');
+    ctx.strokeStyle = fGrad2;
+    ctx.lineWidth   = 0.5;
+    ctx.beginPath(); ctx.moveTo(0, fy + 3); ctx.lineTo(W, fy + 3); ctx.stroke();
+
+    // ── Mouse-reactive subtle glow
+    const mgx = mouse.x * W;
+    const mgy = mouse.y * H;
+    const mGrad = ctx.createRadialGradient(mgx, mgy, 0, mgx, mgy, W * 0.28);
+    mGrad.addColorStop(0,   'rgba(200,150,46,0.025)');
+    mGrad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = mGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // ── Scanlines
+    ctx.fillStyle = 'rgba(0,0,0,0.025)';
+    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 2);
+
+    // ── Vignette
+    const vig = ctx.createRadialGradient(W/2, H/2, H*0.12, W/2, H/2, H*0.95);
+    vig.addColorStop(0,   'rgba(0,0,0,0)');
+    vig.addColorStop(0.65,'rgba(0,0,0,0.28)');
+    vig.addColorStop(1,   'rgba(0,0,0,0.92)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+  requestAnimationFrame(drawFrame);
+}
+
+/* ─────────────────────────────────────────
+   1c. YOUTUBE EMBED — show only if embedding works
+   Error 153 / 150 / 101 = embedding disabled → hide iframe, canvas shows
+───────────────────────────────────────── */
+function initYouTubeHandler() {
+  const wrap = $('#hero-video-wrap');
+  const iframe = $('#hero-video');
+  if (!wrap || !iframe) return;
+
+  // YouTube sends postMessage events
+  window.addEventListener('message', e => {
+    // Only handle YouTube messages
+    if (!e.origin.includes('youtube.com')) return;
+
+    try {
+      const data = JSON.parse(e.data);
+
+      // YT player state 1 = playing → show video
+      if (data?.info?.playerState === 1) {
+        wrap.classList.add('is-ready');
+      }
+
+      // Errors 100,101,150,153 = can't embed → keep canvas, hide video wrap
+      const errorCodes = [100, 101, 150, 153];
+      if (data?.info?.errorCode && errorCodes.includes(data.info.errorCode)) {
+        wrap.style.display = 'none';
+      }
+    } catch (_) {}
+  });
+
+  // Fallback: if video hasn't shown after 5s, assume blocked
+  setTimeout(() => {
+    if (!wrap.classList.contains('is-ready')) {
+      wrap.style.display = 'none';
+    }
+  }, 5000);
 }
 
 /* ─────────────────────────────────────────
@@ -637,6 +840,8 @@ function initFooter() {
 function init() {
   gsap.registerPlugin(ScrollTrigger);
   initGrain();
+  initCinematicCanvas();   // always-on fallback background
+  initYouTubeHandler();    // show video on top only if embedding works
   initCursor();
   initLoader();
 
