@@ -49,166 +49,154 @@ function initGrain() {
 /* ─────────────────────────────────────────
    1b. CINEMATIC CANVAS HERO BACKGROUND
    Projector-in-dark-theatre atmosphere.
-   Always renders — YouTube layers on top when available.
+   Runs after DOM ready — always visible regardless of YouTube.
 ───────────────────────────────────────── */
 function initCinematicCanvas() {
-  const canvas = $('#hero-canvas');
-  if (!canvas) return;
+  // Defer until DOM + layout are ready
+  const run = () => {
+    const canvas = document.getElementById('hero-canvas');
+    if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
-  let W = 0, H = 0;
-  let t = 0;
-  let mouse = { x: 0.78, y: 0.12 };
+    const ctx = canvas.getContext('2d');
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    let t = 0;
+    let mouse = { x: 0.82, y: 0.1 };
+    let particles = [];
 
-  // Dust particles in projector beam
-  let particles = [];
+    function spawnParticles() {
+      particles = Array.from({ length: 80 }, () => ({
+        x:     Math.random(),
+        y:     Math.random(),
+        r:     Math.random() * 1.6 + 0.4,
+        vx:    (Math.random() - 0.5) * 0.00010,
+        vy:   -(Math.random() * 0.00022 + 0.00007),
+        o:     Math.random() * 0.6 + 0.2,
+        phase: Math.random() * Math.PI * 2,
+      }));
+    }
 
-  function spawnParticles() {
-    particles = Array.from({ length: 70 }, () => ({
-      x:     Math.random(),
-      y:     Math.random(),
-      r:     Math.random() * 1.4 + 0.3,
-      vx:    (Math.random() - 0.5) * 0.00012,
-      vy:   -(Math.random() * 0.00025 + 0.00008),
-      o:     Math.random() * 0.55 + 0.1,
-      phase: Math.random() * Math.PI * 2,
-    }));
-  }
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      spawnParticles();
+    }
 
-  function resize() {
-    W = canvas.width  = canvas.offsetWidth  || window.innerWidth;
-    H = canvas.height = canvas.offsetHeight || window.innerHeight;
-    spawnParticles();
-  }
+    document.addEventListener('mousemove', e => {
+      mouse.x = e.clientX / W;
+      mouse.y = e.clientY / H;
+    }, { passive: true });
 
-  document.addEventListener('mousemove', e => {
-    mouse.x = e.clientX / W;
-    mouse.y = e.clientY / H;
-  }, { passive: true });
+    function drawFrame(ts) {
+      t = ts;
+      ctx.clearRect(0, 0, W, H);
 
-  function drawFrame(ts) {
-    t = ts;
-    ctx.clearRect(0, 0, W, H);
+      /* Base — transparent so the CSS gradient behind shows through */
+      ctx.clearRect(0, 0, W, H);
 
-    // ── Deep cinematic black base
-    ctx.fillStyle = '#050403';
-    ctx.fillRect(0, 0, W, H);
+      /* ── Projector light cone from upper-right ── */
+      const srcX = W * 0.85;
+      const srcY = H * (-0.08);
 
-    // ── Projector cone from upper-right
-    const srcX = W * 0.84;
-    const srcY = H * (-0.06);
+      // Organic flicker
+      const flicker =
+        0.86 +
+        0.08 * Math.sin(t * 0.000095) +
+        0.05 * Math.cos(t * 0.000041) +
+        (Math.random() > 0.96 ? (Math.random() - 0.5) * 0.05 : 0);
 
-    // Organic flicker
-    const flicker =
-      0.88 +
-      0.07 * Math.sin(t * 0.000023 * 97.3) +
-      0.04 * Math.cos(t * 0.000023 * 43.1) +
-      (Math.random() > 0.97 ? (Math.random() - 0.5) * 0.04 : 0);
-
-    // Draw cone via clipping path
-    ctx.save();
-    ctx.beginPath();
-    const coneLen = H * 1.7;
-    const halfAngle = 0.38;
-    const coneDir = Math.PI * 0.66;
-    ctx.moveTo(srcX, srcY);
-    ctx.lineTo(
-      srcX + Math.cos(coneDir + halfAngle) * coneLen,
-      srcY + Math.sin(coneDir + halfAngle) * coneLen
-    );
-    ctx.lineTo(
-      srcX + Math.cos(coneDir - halfAngle) * coneLen,
-      srcY + Math.sin(coneDir - halfAngle) * coneLen
-    );
-    ctx.closePath();
-    ctx.clip();
-
-    const grad = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, coneLen);
-    grad.addColorStop(0,   `rgba(228,180,74,${0.20 * flicker})`);
-    grad.addColorStop(0.18,`rgba(200,150,46,${0.12 * flicker})`);
-    grad.addColorStop(0.5, `rgba(150,100,25,${0.05 * flicker})`);
-    grad.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-
-    // ── Warm ambient bottom fill
-    const bot = ctx.createLinearGradient(0, H * 0.5, 0, H);
-    bot.addColorStop(0, 'rgba(0,0,0,0)');
-    bot.addColorStop(1, 'rgba(60,30,5,0.08)');
-    ctx.fillStyle = bot;
-    ctx.fillRect(0, 0, W, H);
-
-    // ── Dust particles
-    particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      p.phase += 0.018;
-      if (p.y < -0.05) p.y = 1.05;
-      if (p.x < -0.05) p.x = 1.05;
-      if (p.x >  1.05) p.x = -0.05;
-
-      const inBeam = p.x > 0.28 && p.x < 1.0 && p.y < 0.85;
-      if (!inBeam) return;
-
-      const flick = 0.4 + 0.6 * Math.abs(Math.sin(p.phase));
+      // Clip to cone shape
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(228,180,74,${p.o * flick * 0.32})`;
-      ctx.fill();
-    });
+      const coneLen = Math.max(W, H) * 1.8;
+      const halfAng = 0.42;
+      const coneDir = Math.PI * 0.67;
+      ctx.moveTo(srcX, srcY);
+      ctx.lineTo(
+        srcX + Math.cos(coneDir + halfAng) * coneLen,
+        srcY + Math.sin(coneDir + halfAng) * coneLen
+      );
+      ctx.lineTo(
+        srcX + Math.cos(coneDir - halfAng) * coneLen,
+        srcY + Math.sin(coneDir - halfAng) * coneLen
+      );
+      ctx.closePath();
+      ctx.clip();
 
-    // ── Anamorphic lens flare — thin horizontal amber streak
-    const fy     = H * 0.13;
-    const fAlpha = 0.07 + 0.025 * Math.sin(t * 0.0009);
+      const cg = ctx.createRadialGradient(srcX, srcY, 0, srcX, srcY, coneLen);
+      cg.addColorStop(0,    `rgba(255,200,90,${0.55 * flicker})`);
+      cg.addColorStop(0.08, `rgba(228,170,60,${0.40 * flicker})`);
+      cg.addColorStop(0.25, `rgba(200,140,40,${0.22 * flicker})`);
+      cg.addColorStop(0.55, `rgba(150,95,20,${0.08 * flicker})`);
+      cg.addColorStop(1,    'rgba(0,0,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
 
-    const fGrad = ctx.createLinearGradient(0, fy, W, fy);
-    fGrad.addColorStop(0,    'rgba(228,180,74,0)');
-    fGrad.addColorStop(0.28, `rgba(228,180,74,${fAlpha})`);
-    fGrad.addColorStop(0.5,  `rgba(255,215,120,${fAlpha * 1.5})`);
-    fGrad.addColorStop(0.72, `rgba(228,180,74,${fAlpha})`);
-    fGrad.addColorStop(1,    'rgba(228,180,74,0)');
+      /* ── Dust particles in beam ── */
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.phase += 0.016;
+        if (p.y < -0.05) p.y = 1.05;
+        if (p.x < -0.05) p.x = 1.05;
+        if (p.x >  1.05) p.x = -0.05;
 
-    ctx.strokeStyle = fGrad;
-    ctx.lineWidth   = 1;
-    ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
+        // Only draw in cone area (rough screen-space check)
+        if (p.x < 0.25 || p.y > 0.90) return;
 
-    // Thin secondary streak
-    const fGrad2 = ctx.createLinearGradient(0, fy + 3, W, fy + 3);
-    fGrad2.addColorStop(0.35, 'rgba(200,150,46,0)');
-    fGrad2.addColorStop(0.5,  `rgba(200,150,46,${fAlpha * 0.45})`);
-    fGrad2.addColorStop(0.65, 'rgba(200,150,46,0)');
-    ctx.strokeStyle = fGrad2;
-    ctx.lineWidth   = 0.5;
-    ctx.beginPath(); ctx.moveTo(0, fy + 3); ctx.lineTo(W, fy + 3); ctx.stroke();
+        const flick = 0.35 + 0.65 * Math.abs(Math.sin(p.phase));
+        ctx.beginPath();
+        ctx.arc(p.x * W, p.y * H, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(240,190,80,${p.o * flick * 0.45})`;
+        ctx.fill();
+      });
 
-    // ── Mouse-reactive subtle glow
-    const mgx = mouse.x * W;
-    const mgy = mouse.y * H;
-    const mGrad = ctx.createRadialGradient(mgx, mgy, 0, mgx, mgy, W * 0.28);
-    mGrad.addColorStop(0,   'rgba(200,150,46,0.025)');
-    mGrad.addColorStop(1,   'rgba(0,0,0,0)');
-    ctx.fillStyle = mGrad;
-    ctx.fillRect(0, 0, W, H);
+      /* ── Anamorphic lens flare ── */
+      const fy     = H * 0.11;
+      const fa     = 0.10 + 0.03 * Math.sin(t * 0.0007);
 
-    // ── Scanlines
-    ctx.fillStyle = 'rgba(0,0,0,0.025)';
-    for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 2);
+      const fg = ctx.createLinearGradient(0, fy, W, fy);
+      fg.addColorStop(0,    'rgba(255,200,90,0)');
+      fg.addColorStop(0.22, `rgba(228,170,60,${fa})`);
+      fg.addColorStop(0.5,  `rgba(255,220,130,${fa * 1.8})`);
+      fg.addColorStop(0.78, `rgba(228,170,60,${fa})`);
+      fg.addColorStop(1,    'rgba(255,200,90,0)');
+      ctx.strokeStyle = fg; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(0, fy); ctx.lineTo(W, fy); ctx.stroke();
 
-    // ── Vignette
-    const vig = ctx.createRadialGradient(W/2, H/2, H*0.12, W/2, H/2, H*0.95);
-    vig.addColorStop(0,   'rgba(0,0,0,0)');
-    vig.addColorStop(0.65,'rgba(0,0,0,0.28)');
-    vig.addColorStop(1,   'rgba(0,0,0,0.92)');
-    ctx.fillStyle = vig;
-    ctx.fillRect(0, 0, W, H);
+      // Thin secondary
+      const fg2 = ctx.createLinearGradient(0, fy + 4, W, fy + 4);
+      fg2.addColorStop(0.3, 'rgba(200,150,46,0)');
+      fg2.addColorStop(0.5, `rgba(200,150,46,${fa * 0.5})`);
+      fg2.addColorStop(0.7, 'rgba(200,150,46,0)');
+      ctx.strokeStyle = fg2; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(0, fy + 4); ctx.lineTo(W, fy + 4); ctx.stroke();
 
+      /* ── Mouse glow ── */
+      const mg = ctx.createRadialGradient(
+        mouse.x * W, mouse.y * H, 0,
+        mouse.x * W, mouse.y * H, W * 0.22
+      );
+      mg.addColorStop(0, 'rgba(200,150,46,0.04)');
+      mg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = mg;
+      ctx.fillRect(0, 0, W, H);
+
+      requestAnimationFrame(drawFrame);
+    }
+
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
     requestAnimationFrame(drawFrame);
-  }
+  };
 
-  resize();
-  window.addEventListener('resize', resize, { passive: true });
-  requestAnimationFrame(drawFrame);
+  // Run now if DOM ready, otherwise wait
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 }
 
 /* ─────────────────────────────────────────

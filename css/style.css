@@ -404,21 +404,36 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   display: flex; flex-direction: column;
   justify-content: flex-end;
   overflow: hidden;
+  /* CSS gradient — always-on base so nothing is ever blank */
+  background:
+    radial-gradient(ellipse 80% 90% at 85% -5%,
+      rgba(200,150,46,0.22) 0%,
+      rgba(160,110,25,0.12) 25%,
+      rgba(70,45,8,0.05)   55%,
+      transparent 70%
+    ),
+    radial-gradient(ellipse 45% 55% at 8% 95%,
+      rgba(60,35,8,0.09) 0%,
+      transparent 65%
+    ),
+    linear-gradient(165deg, #0e0b08 0%, #090705 40%, #050403 100%);
 }
 
-/* Cinematic Canvas Fallback */
+/* Cinematic canvas — animated projector, particles, flare */
 #hero-canvas {
-  position: absolute; inset: 0; z-index: 0;
+  position: absolute; inset: 0;
+  z-index: 1;               /* above base, below video */
   width: 100%; height: 100%;
   pointer-events: none;
+  display: block;
 }
 
-/* YouTube Video BG — layered on top of canvas */
+/* YouTube — slides on top of canvas when embedding works */
 .hero-video-wrap {
   position: absolute; inset: 0;
-  overflow: hidden; z-index: 1;
+  overflow: hidden; z-index: 2;
   opacity: 0;
-  transition: opacity 1.2s ease;
+  transition: opacity 1.4s ease;
 }
 .hero-video-wrap.is-ready { opacity: 1; }
 #hero-video {
@@ -432,47 +447,47 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   border: none;
 }
 
-/* Overlays — stackable cinematic grading */
+/* Video darkening overlays (z-index 3+, above both canvas & video) */
 .hero-overlay {
-  position: absolute; inset: 0; z-index: 1;
-  background: rgba(5,4,3,0.52);
+  position: absolute; inset: 0; z-index: 3;
+  /* Only darken when video is playing; canvas draws its own vignette */
+  background: rgba(5,4,3,0.22);
 }
 .hero-grade {
-  position: absolute; inset: 0; z-index: 2;
+  position: absolute; inset: 0; z-index: 4;
   background: linear-gradient(
     180deg,
-    rgba(200,150,46,0.04) 0%,
+    rgba(200,150,46,0.03) 0%,
     transparent 35%,
-    rgba(5,4,3,0.25) 100%
+    rgba(5,4,3,0.18) 100%
   );
-  mix-blend-mode: multiply;
 }
 .hero-vignette {
-  position: absolute; inset: 0; z-index: 3;
+  position: absolute; inset: 0; z-index: 5;
   background: radial-gradient(
-    ellipse 90% 90% at 50% 50%,
-    transparent 25%,
-    rgba(5,4,3,0.55) 65%,
-    rgba(5,4,3,0.95) 100%
+    ellipse 88% 88% at 50% 50%,
+    transparent 20%,
+    rgba(5,4,3,0.45) 60%,
+    rgba(5,4,3,0.92) 100%
   );
 }
 .hero-scanlines {
-  position: absolute; inset: 0; z-index: 4;
+  position: absolute; inset: 0; z-index: 6;
   background-image: repeating-linear-gradient(
     0deg, transparent, transparent 3px,
-    rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+    rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px
   );
   pointer-events: none;
 }
 .hero-bottom-fade {
   position: absolute; bottom: 0; left: 0; right: 0;
-  height: 35%; z-index: 5;
+  height: 38%; z-index: 7;
   background: linear-gradient(0deg, var(--c-black) 0%, transparent 100%);
 }
 
 /* Anamorphic lens flare */
 .hero-lens-flare {
-  position: absolute; z-index: 4;
+  position: absolute; z-index: 8;
   top: 14%; left: 0; right: 0; height: 2px;
   background: linear-gradient(
     90deg,
@@ -505,7 +520,7 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 
 /* Hero content */
 .hero-content {
-  position: relative; z-index: 6;
+  position: relative; z-index: 10;
   max-width: var(--max-w); margin: 0 auto;
   padding: 0 var(--pad-x);
   padding-bottom: clamp(5rem, 10vh, 9rem);
@@ -569,7 +584,7 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   position: absolute;
   bottom: clamp(5rem, 10vh, 9rem);
   right: var(--pad-x);
-  z-index: 6;
+  z-index: 10;
   display: flex; flex-direction: column;
   align-items: flex-end; gap: 0.2rem;
 }
@@ -588,7 +603,7 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 }
 .hero-scroll-cue {
   position: absolute; bottom: 2.2rem; left: var(--pad-x);
-  z-index: 6;
+  z-index: 10;
   display: flex; align-items: center; gap: 0.9rem;
   opacity: 0;
 }
