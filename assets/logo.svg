@@ -1,0 +1,77 @@
+<svg viewBox="0 0 320 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CineMan Productions">
+
+  <!-- Large lens (right) -->
+  <circle cx="200" cy="78" r="72" fill="#C8962E"/>
+  <circle cx="200" cy="78" r="52" fill="#080705"/>
+  <circle cx="200" cy="78" r="34" fill="#C8962E"/>
+  <circle cx="200" cy="78" r="17" fill="#080705"/>
+
+  <!-- Small lens (left) -->
+  <circle cx="110" cy="96" r="46" fill="#C8962E"/>
+  <circle cx="110" cy="96" r="32" fill="#080705"/>
+  <circle cx="110" cy="96" r="19" fill="#C8962E"/>
+  <circle cx="110" cy="96" r="9"  fill="#080705"/>
+
+  <!-- Camera body / CM letterform -->
+  <!-- Left nub (sync contact) -->
+  <rect x="52" y="174" width="10" height="22" fill="#C8962E"/>
+
+  <!-- C shape — outer body with two gate slots cut out on right -->
+  <path d="
+    M 62 152
+    H 178
+    V 168
+    H 78
+    V 178
+    H 178
+    V 192
+    H 78
+    V 202
+    H 178
+    V 218
+    H 62
+    Z
+  " fill="#C8962E"/>
+
+  <!-- M shape — right letterform (3 vertical bars + peak) -->
+  <path d="
+    M 178 152
+    H 198
+    L 219 185
+    L 240 152
+    H 260
+    V 218
+    H 242
+    V 178
+    L 219 210
+    L 196 178
+    V 218
+    H 178
+    Z
+  " fill="#C8962E"/>
+
+  <!-- CINEMAN wordmark -->
+  <text
+    x="160" y="258"
+    font-family="'Bebas Neue', Impact, 'Arial Black', sans-serif"
+    font-size="52"
+    fill="#C8962E"
+    text-anchor="middle"
+    letter-spacing="4"
+  >CINEMAN</text>
+
+  <!-- Separator rule -->
+  <rect x="44" y="267" width="232" height="2" fill="#C8962E"/>
+
+  <!-- PRODUCTIONS LTD -->
+  <text
+    x="160" y="294"
+    font-family="'Space Grotesk', 'Arial', sans-serif"
+    font-size="15"
+    font-weight="700"
+    fill="#C8962E"
+    text-anchor="middle"
+    letter-spacing="5"
+  >PRODUCTIONS LTD</text>
+
+</svg>
