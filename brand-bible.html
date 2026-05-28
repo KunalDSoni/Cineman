@@ -3,872 +3,187 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Brand Bible — CineMan Productions Design System</title>
+  <meta name="description" content="CineMan Productions — Brand Bible & Design System">
+  <title>Brand Bible — CineMan Productions</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
   <link rel="stylesheet" href="css/style.css">
   <style>
-    .bb-nav {
-      background: var(--c-surface);
-      padding: 1rem var(--pad-x);
-      border-bottom: 1px solid var(--c-border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .bb-nav-title { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-text-muted); }
-    .bb-nav-home { font-size: 0.7rem; color: var(--c-kodak); }
-
-    .bb-section {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 6rem var(--pad-x);
-      border-bottom: 1px solid var(--c-border);
-    }
-
-    .bb-title {
-      font-family: var(--font-mono);
-      font-size: clamp(2.5rem, 5vw, 5rem);
-      color: var(--c-cream);
-      letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
-    }
-
-    .bb-subtitle {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--c-kodak);
-      margin-bottom: 3rem;
-    }
-
-    /* Hero for brand bible */
-    .bb-hero {
-      padding: 5rem var(--pad-x) 4rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      border-bottom: 1px solid var(--c-border);
-    }
-    .bb-hero-label {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--c-kodak);
-      margin-bottom: 1.5rem;
-      display: block;
-    }
-    .bb-hero-heading {
-      font-family: var(--font-mono);
-      font-size: clamp(3rem, 8vw, 8rem);
-      color: var(--c-cream);
-      line-height: 0.9;
-      letter-spacing: -0.03em;
-      margin-bottom: 2rem;
-    }
-    .bb-hero-heading span { color: var(--c-projector); }
-    .bb-hero-desc {
-      font-family: var(--font-display);
-      font-style: italic;
-      font-size: 1.2rem;
-      color: var(--c-text-mid);
-      max-width: 600px;
-      line-height: 1.65;
-    }
-
-    /* Color Swatches */
-    .color-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 1rem;
-    }
-    .color-swatch {
-      border: 1px solid var(--c-border);
-      overflow: hidden;
-    }
-    .swatch-block {
-      height: 100px;
-    }
-    .swatch-info {
-      padding: 0.75rem;
-      background: var(--c-surface);
-    }
-    .swatch-name {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--c-cream);
-      margin-bottom: 0.2rem;
-    }
-    .swatch-hex {
-      font-family: monospace;
-      font-size: 0.65rem;
-      color: var(--c-kodak);
-    }
-    .swatch-role {
-      font-size: 0.6rem;
-      color: var(--c-text-muted);
-      margin-top: 0.2rem;
-    }
-
-    /* Typography */
-    .type-sample {
-      padding: 2.5rem;
-      border: 1px solid var(--c-border);
-      margin-bottom: 1rem;
-      background: var(--c-surface);
-    }
-    .type-label {
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--c-text-muted);
-      margin-bottom: 1rem;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    /* Headlines list */
-    .headlines-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .headline-item {
-      padding: 2rem 0;
-      border-bottom: 1px solid var(--c-border);
-      display: grid;
-      grid-template-columns: 3rem 1fr;
-      gap: 1.5rem;
-      align-items: baseline;
-    }
-    .hl-num {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--c-text-muted);
-    }
-    .hl-text {
-      font-family: var(--font-display);
-      font-size: clamp(1.1rem, 1.8vw, 1.6rem);
-      font-style: italic;
-      font-weight: 700;
-      color: var(--c-cream);
-      line-height: 1.3;
-    }
-    .hl-text em { color: var(--c-projector); }
-
-    /* Motion Cards */
-    .motion-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.5rem;
-    }
-    .motion-card {
-      padding: 2rem;
-      border: 1px solid var(--c-border);
-      background: var(--c-surface);
-    }
-    .mc-icon {
-      font-size: 1.5rem;
-      color: var(--c-kodak);
-      margin-bottom: 1rem;
-    }
-    .mc-title {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--c-cream);
-      margin-bottom: 0.5rem;
-    }
-    .mc-desc {
-      font-size: 0.85rem;
-      color: var(--c-text-mid);
-      line-height: 1.65;
-    }
-    .mc-spec {
-      margin-top: 0.75rem;
-      font-family: monospace;
-      font-size: 0.7rem;
-      color: var(--c-kodak);
-      background: rgba(200, 150, 46, 0.05);
-      padding: 0.4rem 0.6rem;
-      border-left: 2px solid var(--c-kodak);
-    }
-
-    /* Case study format */
-    .cs-format-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1.5rem;
-    }
-    .cs-format-card {
-      padding: 1.75rem;
-      border: 1px solid var(--c-border);
-    }
-    .csf-num {
-      font-family: var(--font-mono);
-      font-size: 2rem;
-      color: var(--c-kodak);
-      opacity: 0.3;
-      margin-bottom: 0.75rem;
-    }
-    .csf-title {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--c-cream);
-      margin-bottom: 0.5rem;
-    }
-    .csf-desc {
-      font-size: 0.8rem;
-      color: var(--c-text-mid);
-      line-height: 1.6;
-    }
-
-    /* Forbidden copy */
-    .forbidden-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    @media (max-width: 600px) { .forbidden-grid { grid-template-columns: 1fr; } }
-    .fg-col h3 {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 1.25rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--c-border);
-    }
-    .fg-bad h3 { color: #854040; }
-    .fg-good h3 { color: var(--c-kodak); }
-    .fg-item {
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
-      font-style: italic;
-      line-height: 1.4;
-      border-left: 2px solid;
-      margin-bottom: 0.5rem;
-    }
-    .fg-bad .fg-item { color: #854040; border-color: rgba(133, 64, 64, 0.3); background: rgba(133, 64, 64, 0.05); }
-    .fg-good .fg-item { color: var(--c-projector); border-color: rgba(200, 150, 46, 0.3); background: rgba(200, 150, 46, 0.05); }
-
-    /* Principles */
-    .principle-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .principle-item {
-      display: grid;
-      grid-template-columns: 5rem 1fr;
-      gap: 2rem;
-      padding: 2rem 0;
-      border-bottom: 1px solid var(--c-border);
-      align-items: flex-start;
-    }
-    .principle-num {
-      font-family: var(--font-mono);
-      font-size: 2.5rem;
-      color: var(--c-kodak);
-      opacity: 0.3;
-      line-height: 1;
-    }
-    .principle-content h3 {
-      font-family: var(--font-display);
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--c-cream);
-      margin-bottom: 0.5rem;
-    }
-    .principle-content p {
-      font-size: 0.9rem;
-      color: var(--c-text-mid);
-      line-height: 1.65;
-    }
+    .bb-section { max-width:1200px; margin:0 auto; padding:6rem var(--pad-x); border-bottom:1px solid var(--c-border); }
+    .bb-section-title { font-family:var(--font-mono); font-size:clamp(2.5rem,5vw,5rem); color:var(--c-cream); letter-spacing:-0.02em; margin-bottom:2rem; }
+    .bb-label { font-size:0.62rem; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:var(--c-kodak); margin-bottom:1rem; display:block; }
+    .bb-desc { font-size:0.95rem; color:var(--c-mid); max-width:600px; margin-bottom:3rem; line-height:1.7; }
+    .color-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; }
+    .color-swatch { border:1px solid var(--c-border); overflow:hidden; }
+    .swatch-block { height:90px; }
+    .swatch-info { padding:0.75rem; background:var(--c-surface); }
+    .swatch-name { font-size:0.7rem; font-weight:700; color:var(--c-cream); margin-bottom:0.2rem; }
+    .swatch-hex { font-family:monospace; font-size:0.65rem; color:var(--c-kodak); }
+    .swatch-role { font-size:0.58rem; color:var(--c-muted); margin-top:0.2rem; }
+    .headline-list { display:flex; flex-direction:column; }
+    .headline-item { padding:1.75rem 0; border-bottom:1px solid var(--c-border); display:grid; grid-template-columns:3rem 1fr; gap:1.5rem; align-items:baseline; }
+    .hl-num { font-family:var(--font-mono); font-size:0.72rem; color:var(--c-muted); }
+    .hl-text { font-family:var(--font-display); font-size:clamp(1rem,1.8vw,1.5rem); font-style:italic; font-weight:700; color:var(--c-cream); line-height:1.3; }
+    .hl-text em { color:var(--c-projector); }
+    .page-hero { padding:calc(var(--nav-h) + 5rem) var(--pad-x) 4rem; max-width:var(--max-w); margin:0 auto; border-bottom:1px solid var(--c-border); }
   </style>
 </head>
 <body>
+
+  <!-- GRAIN -->
   <canvas id="grain-canvas" aria-hidden="true"></canvas>
-  <div class="cursor-dot" id="cursor-dot"></div>
-  <div class="cursor-ring" id="cursor-ring"></div>
 
-  <div class="bb-nav">
-    <span class="bb-nav-title">CineMan Productions — Brand Bible & Design System v1.0</span>
-    <a href="index.html" class="bb-nav-home">← Back to Website</a>
-  </div>
+  <!-- CURSOR -->
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-label" id="cursor-label" aria-hidden="true">VIEW</div>
 
-  <!-- HERO -->
-  <div class="bb-hero">
-    <span class="bb-hero-label">Design System & Brand Identity</span>
-    <h1 class="bb-hero-heading">BRAND<br><span>BIBLE</span></h1>
-    <p class="bb-hero-desc">The complete design language, copy philosophy, motion system, and creative principles behind the CineMan Productions experience.</p>
-  </div>
-
-  <!-- 1. BRAND PRINCIPLES -->
-  <div class="bb-section">
-    <div class="bb-subtitle">01 — Brand Principles</div>
-    <h2 class="bb-title">HOW WE THINK</h2>
-
-    <div class="principle-list">
-      <div class="principle-item">
-        <span class="principle-num">01</span>
-        <div class="principle-content">
-          <h3>Cinema is the highest form of strategy.</h3>
-          <p>Every creative decision — from color to cut to copy — is made with the same intentionality as a screenplay. Nothing decorative. Everything purposeful. The design serves the story, and the story serves the feeling we want to leave behind.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">02</span>
-        <div class="principle-content">
-          <h3>Warmth before cool.</h3>
-          <p>The yellow-black palette is a deliberate rejection of cold modernism. Cinema is warm. Memory is amber. The tungsten glow of a projector is the warmest light in any room. Our visual identity must always feel like entering that room.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">03</span>
-        <div class="principle-content">
-          <h3>Regional is not a limitation. It is a superpower.</h3>
-          <p>CineMan was born in Ahmedabad. That specificity is the brand's greatest asset. The most universal stories are the most specific ones. We do not hide our roots — we project them onto every screen we touch.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">04</span>
-        <div class="principle-content">
-          <h3>Every scroll is a scene change.</h3>
-          <p>The website is not a brochure. It is a film. Each section is a scene. Each transition is a cut. The user is not browsing — they are watching. Design and motion must honor that contract.</p>
-        </div>
-      </div>
-      <div class="principle-item">
-        <span class="principle-num">05</span>
-        <div class="principle-content">
-          <h3>Silence is part of the composition.</h3>
-          <p>White space — or in our case, dark space — is not emptiness. It is dramatic pause. The gap between words is where meaning lives. Never fill for the sake of filling. Let the frame breathe.</p>
-        </div>
+  <!-- FULLSCREEN MENU -->
+  <div class="menu-overlay" id="menu-overlay">
+    <div class="menu-inner">
+      <nav class="menu-nav">
+        <a href="index.html#films"     class="menu-link"><span class="ml-idx">01</span><span class="ml-text">Films</span></a>
+        <a href="index.html#work"      class="menu-link"><span class="ml-idx">02</span><span class="ml-text">Commercials</span></a>
+        <a href="index.html#directors" class="menu-link"><span class="ml-idx">03</span><span class="ml-text">Directors</span></a>
+        <a href="index.html#cast"      class="menu-link"><span class="ml-idx">04</span><span class="ml-text">Ensemble</span></a>
+        <a href="index.html#studio"    class="menu-link"><span class="ml-idx">05</span><span class="ml-text">Studio</span></a>
+        <a href="index.html#awards"    class="menu-link"><span class="ml-idx">06</span><span class="ml-text">Awards</span></a>
+        <a href="index.html#journal"   class="menu-link"><span class="ml-idx">07</span><span class="ml-text">Journal</span></a>
+        <a href="index.html#contact"   class="menu-link"><span class="ml-idx">08</span><span class="ml-text">Contact</span></a>
+      </nav>
+      <div class="menu-meta">
+        <p>National Award Winning · OTT Pioneers · Ahmedabad</p>
+        <a href="mailto:hello@cineman.in">hello@cineman.in</a>
       </div>
     </div>
   </div>
 
-  <!-- 2. COLOR SYSTEM -->
-  <div class="bb-section">
-    <div class="bb-subtitle">02 — Color System</div>
-    <h2 class="bb-title">CINEMATIC<br>PALETTE</h2>
+  <!-- NAVIGATION -->
+  <nav class="nav is-scrolled" id="nav">
+    <div class="nav-inner">
+      <div class="nav-center-group">
+        <ul class="nav-links" role="list">
+          <li><a href="index.html#films" class="nav-link">Films</a></li>
+          <li><a href="index.html#work"  class="nav-link">Work</a></li>
+        </ul>
+        <a href="index.html" class="nav-logo" aria-label="CineMan Productions">
+          <img src="assets/logo.svg" alt="CineMan Productions" class="nav-logo-img">
+        </a>
+        <ul class="nav-links" role="list">
+          <li><a href="index.html#studio"    class="nav-link">Studio</a></li>
+          <li><a href="index.html#directors" class="nav-link">Directors</a></li>
+        </ul>
+      </div>
+      <a href="index.html" class="nav-mobile-logo" aria-label="CineMan Productions">
+        <img src="assets/logo.svg" alt="CineMan Productions">
+      </a>
+      <div class="nav-end">
+        <a href="index.html#contact" class="nav-cta">Let's Create</a>
+        <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
 
-    <p style="font-size: 0.95rem; color: var(--c-text-mid); max-width: 600px; margin-bottom: 3rem; line-height: 1.7;">
-      The palette is built around the warmth of tungsten film lighting — the specific quality of light that made 35mm cinema feel alive. Not startup yellow. Not neon. Kodak amber, projector gold, shadow black.
-    </p>
+  <main>
 
-    <h3 style="font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--c-text-muted); margin-bottom: 1.5rem;">Gold & Amber — The Cinematic Yellow Family</h3>
-    <div class="color-grid" style="margin-bottom: 3rem;">
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #C8962E;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Kodak Amber</div>
-          <div class="swatch-hex">#C8962E</div>
-          <div class="swatch-role">Primary Brand — UI, CTAs, accents</div>
-        </div>
+    <div class="page-hero">
+      <div class="page-eyebrow" style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem;">
+        <span class="eyebrow-line"></span>
+        <span class="eyebrow-label">Design System</span>
       </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #E4B44A;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Projector Gold</div>
-          <div class="swatch-hex">#E4B44A</div>
-          <div class="swatch-role">Headlines, highlights, hover states</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #D4A040;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Tungsten Film</div>
-          <div class="swatch-hex">#D4A040</div>
-          <div class="swatch-role">Mid-tone gold, active states</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #A67C2E;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Deep Cinema Amber</div>
-          <div class="swatch-hex">#A67C2E</div>
-          <div class="swatch-role">Borders, dividers, subtle yellow</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #F0C060;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Film Highlight</div>
-          <div class="swatch-hex">#F0C060</div>
-          <div class="swatch-role">Maximum brightness, rare accent</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #8C6E1F;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Muted Mustard</div>
-          <div class="swatch-hex">#8C6E1F</div>
-          <div class="swatch-role">Shadow gold, low-key contexts</div>
-        </div>
+      <h1 class="page-title" style="font-family:var(--font-mono);font-size:clamp(4rem,10vw,9rem);color:var(--c-cream);line-height:0.9;letter-spacing:-0.02em;margin-bottom:1.5rem;">BRAND<br><span style="color:var(--c-projector);">BIBLE</span></h1>
+      <p class="page-sub" style="font-family:var(--font-display);font-style:italic;font-size:1.15rem;color:var(--c-mid);max-width:520px;line-height:1.65;">The complete design language, copy philosophy, motion system, and creative principles behind CineMan Productions.</p>
+    </div>
+
+    <!-- COLOR PALETTE -->
+    <div class="bb-section">
+      <span class="bb-label">01 — Color System</span>
+      <h2 class="bb-section-title">CINEMATIC PALETTE</h2>
+      <p class="bb-desc">Built around tungsten film lighting — Kodak amber, projector gold, shadow black. Not startup yellow. Filmic warmth.</p>
+      <div class="color-grid">
+        <div class="color-swatch"><div class="swatch-block" style="background:#C8962E;"></div><div class="swatch-info"><div class="swatch-name">Kodak Amber</div><div class="swatch-hex">#C8962E</div><div class="swatch-role">Primary brand</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#E4B44A;"></div><div class="swatch-info"><div class="swatch-name">Projector Gold</div><div class="swatch-hex">#E4B44A</div><div class="swatch-role">Headlines, highlights</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#D4A040;"></div><div class="swatch-info"><div class="swatch-name">Tungsten Film</div><div class="swatch-hex">#D4A040</div><div class="swatch-role">Active states</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#A67C2E;"></div><div class="swatch-info"><div class="swatch-name">Deep Amber</div><div class="swatch-hex">#A67C2E</div><div class="swatch-role">Borders, dividers</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#050403;border:1px solid #2A2520;"></div><div class="swatch-info"><div class="swatch-name">Cinema Black</div><div class="swatch-hex">#050403</div><div class="swatch-role">Primary background</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#141210;border:1px solid #2A2520;"></div><div class="swatch-info"><div class="swatch-name">Card Surface</div><div class="swatch-hex">#141210</div><div class="swatch-role">Cards, panels</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#F0E8D5;"></div><div class="swatch-info"><div class="swatch-name">Warm Cream</div><div class="swatch-hex">#F0E8D5</div><div class="swatch-role">Primary text</div></div></div>
+        <div class="color-swatch"><div class="swatch-block" style="background:#9A8E78;"></div><div class="swatch-info"><div class="swatch-name">Film Dust</div><div class="swatch-hex">#9A8E78</div><div class="swatch-role">Body text</div></div></div>
       </div>
     </div>
 
-    <h3 style="font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--c-text-muted); margin-bottom: 1.5rem;">The Black Family — Cinema Darkness</h3>
-    <div class="color-grid" style="margin-bottom: 3rem;">
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #080705; border: 1px solid #2E2820;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Cinema Black</div>
-          <div class="swatch-hex">#080705</div>
-          <div class="swatch-role">Primary background — warmest black</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #100E0B; border: 1px solid #2E2820;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Deep Charcoal</div>
-          <div class="swatch-hex">#100E0B</div>
-          <div class="swatch-role">Section backgrounds</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #1A1714; border: 1px solid #2E2820;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Card Surface</div>
-          <div class="swatch-hex">#1A1714</div>
-          <div class="swatch-role">Cards, panels, elevated surfaces</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #2E2820; border: 1px solid #2E2820;"></div>
-        <div class="swatch-info">
-          <div class="swatch-name">Border Smoke</div>
-          <div class="swatch-hex">#2E2820</div>
-          <div class="swatch-role">Dividers, borders, rules</div>
-        </div>
+    <!-- HEADLINES -->
+    <div class="bb-section">
+      <span class="bb-label">02 — Copywriting</span>
+      <h2 class="bb-section-title">15 CINEMATIC HEADLINES</h2>
+      <p class="bb-desc">Write like a director, not a marketer. Poetic, confident, emotionally intelligent.</p>
+      <div class="headline-list">
+        <div class="headline-item"><span class="hl-num">01</span><blockquote class="hl-text">Cinema is not a product. It is a <em>memory we manufacture.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">02</span><blockquote class="hl-text">We don't make ads. We direct <em>emotional memory.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">03</span><blockquote class="hl-text">Frames designed to <em>outlive trends.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">04</span><blockquote class="hl-text">Stories that move <em>culture,</em> not just audiences.</blockquote></div>
+        <div class="headline-item"><span class="hl-num">05</span><blockquote class="hl-text">From the theatres of Gujarat to <em>the screens of the world.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">06</span><blockquote class="hl-text">Where brand truth becomes <em>cinematic language.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">07</span><blockquote class="hl-text">The reel never ends. <em>Neither does the feeling.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">08</span><blockquote class="hl-text">We shoot in <em>feeling.</em> We edit in <em>meaning.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">09</span><blockquote class="hl-text">Every frame is <em>a manifesto.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">10</span><blockquote class="hl-text">Cinema for brands that want to be <em>remembered.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">11</span><blockquote class="hl-text">Not a production house. <em>A cinematic universe.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">12</span><blockquote class="hl-text">Light, story, truth — <em>in that order.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">13</span><blockquote class="hl-text">We were born in the dark. <em>We live in the light.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">14</span><blockquote class="hl-text">Made in India. <em>Felt worldwide.</em></blockquote></div>
+        <div class="headline-item"><span class="hl-num">15</span><blockquote class="hl-text">The story continues. <em>Scene after scene. Frame after frame.</em></blockquote></div>
       </div>
     </div>
 
-    <h3 style="font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--c-text-muted); margin-bottom: 1.5rem;">Text Scale</h3>
-    <div class="color-grid">
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #F5EDD8; display: flex; align-items: center; justify-content: center;">
-          <span style="font-size: 0.7rem; font-weight: 600; color: var(--c-black); letter-spacing: 0.1em;">Aa PRIMARY</span>
-        </div>
-        <div class="swatch-info">
-          <div class="swatch-name">Warm Cream</div>
-          <div class="swatch-hex">#F5EDD8</div>
-          <div class="swatch-role">Primary text, headlines</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #A89B82; display: flex; align-items: center; justify-content: center;">
-          <span style="font-size: 0.7rem; font-weight: 600; color: var(--c-black); letter-spacing: 0.1em;">Aa SECONDARY</span>
-        </div>
-        <div class="swatch-info">
-          <div class="swatch-name">Film Dust</div>
-          <div class="swatch-hex">#A89B82</div>
-          <div class="swatch-role">Body text, descriptions</div>
-        </div>
-      </div>
-      <div class="color-swatch">
-        <div class="swatch-block" style="background: #5A5248; display: flex; align-items: center; justify-content: center;">
-          <span style="font-size: 0.7rem; font-weight: 600; color: var(--c-cream); letter-spacing: 0.1em;">Aa MUTED</span>
-        </div>
-        <div class="swatch-info">
-          <div class="swatch-name">Shadow Gray</div>
-          <div class="swatch-hex">#5A5248</div>
-          <div class="swatch-role">Labels, meta text, captions</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </main>
 
-  <!-- 3. TYPOGRAPHY -->
-  <div class="bb-section">
-    <div class="bb-subtitle">03 — Typography</div>
-    <h2 class="bb-title">TYPE SYSTEM</h2>
-
-    <div class="type-sample">
-      <div class="type-label">
-        <span>Display — Bebas Neue / Impact</span>
-        <span>Headlines, film titles, counters</span>
+  <!-- FOOTER -->
+  <footer class="footer" id="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/logo.svg" alt="CineMan Productions" class="footer-logo-img">
+        <p class="footer-tagline">A Cinematic Storytelling Universe</p>
+        <p class="footer-est">Est. 2010 · Ahmedabad, India</p>
       </div>
-      <p style="font-family: 'Bebas Neue', Impact, sans-serif; font-size: clamp(3rem, 7vw, 7rem); color: var(--c-cream); line-height: 0.9; letter-spacing: -0.02em;">CINEMA<br><span style="color: var(--c-projector);">FRAMES</span></p>
-    </div>
-
-    <div class="type-sample">
-      <div class="type-label">
-        <span>Editorial Display — Playfair Display</span>
-        <span>Section titles, editorial statements, quotes</span>
-      </div>
-      <p style="font-family: 'Playfair Display', serif; font-size: clamp(2rem, 4vw, 4rem); font-weight: 700; color: var(--c-cream); line-height: 1.1;">Stories that move <em style="color: var(--c-projector);">culture,</em><br>not just audiences.</p>
-    </div>
-
-    <div class="type-sample">
-      <div class="type-label">
-        <span>UI / Body — Space Grotesk</span>
-        <span>Navigation, body copy, labels, UI elements</span>
-      </div>
-      <p style="font-size: 1rem; color: var(--c-text-mid); line-height: 1.75; max-width: 600px;">CineMan Productions was founded in Ahmedabad, Gujarat in 2010. What began as a regional experiment became a national reckoning. Premium commercial filmmaking where every second is scripted for emotion.</p>
-    </div>
-
-    <div class="type-sample">
-      <div class="type-label">
-        <span>Label / Eyebrow — Space Grotesk 700</span>
-        <span>Section labels, chapter markers, badges</span>
-      </div>
-      <p style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase; color: var(--c-kodak);">Chapter 01 · The Films · Est. 2010 · National Award Winner</p>
-    </div>
-
-    <div style="margin-top: 3rem;">
-      <h3 style="font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-text-muted); margin-bottom: 1.5rem;">Type Scale</h3>
-      <div style="display: flex; flex-direction: column; gap: 1rem;">
-        <div style="display: flex; gap: 2rem; align-items: baseline; border-bottom: 1px solid var(--c-border); padding-bottom: 1rem;">
-          <span style="font-size: 0.65rem; color: var(--c-text-muted); min-width: 80px;">Hero XL</span>
-          <span style="font-family: 'Bebas Neue'; font-size: clamp(4rem, 10vw, 10rem); color: var(--c-cream); line-height: 1;">Aa</span>
-          <span style="font-size: 0.65rem; color: var(--c-text-muted);">clamp(4.5rem, 12vw, 13rem)</span>
+      <div class="footer-nav-grid">
+        <div class="footer-col">
+          <h4 class="fc-title">Studio</h4>
+          <a href="index.html#studio"    class="fc-link">About</a>
+          <a href="index.html#directors" class="fc-link">Directors</a>
+          <a href="index.html#awards"    class="fc-link">Awards</a>
+          <a href="index.html#contact"   class="fc-link">Careers</a>
         </div>
-        <div style="display: flex; gap: 2rem; align-items: baseline; border-bottom: 1px solid var(--c-border); padding-bottom: 1rem;">
-          <span style="font-size: 0.65rem; color: var(--c-text-muted); min-width: 80px;">Display</span>
-          <span style="font-family: 'Playfair Display'; font-size: 4rem; font-weight: 700; color: var(--c-cream); line-height: 1;">Aa</span>
-          <span style="font-size: 0.65rem; color: var(--c-text-muted);">clamp(2.5rem, 5vw, 5rem)</span>
+        <div class="footer-col">
+          <h4 class="fc-title">Work</h4>
+          <a href="films.html"           class="fc-link">All Films</a>
+          <a href="index.html#work"      class="fc-link">Commercials</a>
+          <a href="case-study.html"      class="fc-link">Case Studies</a>
         </div>
-        <div style="display: flex; gap: 2rem; align-items: baseline; border-bottom: 1px solid var(--c-border); padding-bottom: 1rem;">
-          <span style="font-size: 0.65rem; color: var(--c-text-muted); min-width: 80px;">H2</span>
-          <span style="font-family: 'Playfair Display'; font-size: 2.5rem; font-weight: 700; color: var(--c-cream); line-height: 1;">Aa</span>
-          <span style="font-size: 0.65rem; color: var(--c-text-muted);">clamp(2rem, 3.5vw, 3.5rem)</span>
-        </div>
-        <div style="display: flex; gap: 2rem; align-items: baseline; border-bottom: 1px solid var(--c-border); padding-bottom: 1rem;">
-          <span style="font-size: 0.65rem; color: var(--c-text-muted); min-width: 80px;">Body</span>
-          <span style="font-size: 1rem; color: var(--c-cream); line-height: 1;">Aa</span>
-          <span style="font-size: 0.65rem; color: var(--c-text-muted);">1rem / line-height 1.75</span>
-        </div>
-        <div style="display: flex; gap: 2rem; align-items: baseline;">
-          <span style="font-size: 0.65rem; color: var(--c-text-muted); min-width: 80px;">Label</span>
-          <span style="font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-cream); line-height: 1;">LABEL TEXT</span>
-          <span style="font-size: 0.65rem; color: var(--c-text-muted);">0.65rem / 700 / tracking 0.2em</span>
+        <div class="footer-col">
+          <h4 class="fc-title">Connect</h4>
+          <a href="https://www.instagram.com/cinemanproductions" target="_blank" rel="noopener" class="fc-link">Instagram</a>
+          <a href="https://www.linkedin.com/company/cinemanofficial/" target="_blank" rel="noopener" class="fc-link">LinkedIn</a>
+          <a href="https://en.wikipedia.org/wiki/CineMan_Productions" target="_blank" rel="noopener" class="fc-link">Wikipedia</a>
+          <a href="mailto:hello@cineman.in" class="fc-link">Email</a>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- 4. HERO HEADLINES -->
-  <div class="bb-section">
-    <div class="bb-subtitle">04 — Copywriting System</div>
-    <h2 class="bb-title">15 CINEMATIC<br>HERO HEADLINES</h2>
-    <p style="font-size: 0.9rem; color: var(--c-text-mid); max-width: 500px; margin-bottom: 3rem; line-height: 1.7;">
-      These headlines define CineMan's voice — poetic, confident, cinematic. They should feel like the title card of a great film: precise, weighted, unforgettable.
-    </p>
-
-    <div class="headlines-list">
-      <div class="headline-item">
-        <span class="hl-num">01</span>
-        <blockquote class="hl-text">Cinema is not a product. It is a <em>memory we manufacture.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">02</span>
-        <blockquote class="hl-text">We don't make ads. We direct <em>emotional memory.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">03</span>
-        <blockquote class="hl-text">Frames designed to <em>outlive trends.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">04</span>
-        <blockquote class="hl-text">Stories that move <em>culture,</em> not just audiences.</blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">05</span>
-        <blockquote class="hl-text">From the theatres of Gujarat to <em>the screens of the world.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">06</span>
-        <blockquote class="hl-text">Where brand truth becomes <em>cinematic language.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">07</span>
-        <blockquote class="hl-text">The reel never ends. <em>Neither does the feeling.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">08</span>
-        <blockquote class="hl-text">We shoot in <em>feeling.</em> We edit in <em>meaning.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">09</span>
-        <blockquote class="hl-text">Every frame is <em>a manifesto.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">10</span>
-        <blockquote class="hl-text">Cinema for brands that want to be <em>remembered.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">11</span>
-        <blockquote class="hl-text">Not a production house. <em>A cinematic universe.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">12</span>
-        <blockquote class="hl-text">Light, story, truth — <em>in that order.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">13</span>
-        <blockquote class="hl-text">We were born in the dark. <em>We live in the light.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">14</span>
-        <blockquote class="hl-text">Made in India. <em>Felt worldwide.</em></blockquote>
-      </div>
-      <div class="headline-item">
-        <span class="hl-num">15</span>
-        <blockquote class="hl-text">The story continues. <em>Scene after scene. Frame after frame.</em></blockquote>
-      </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2024 CineMan Productions Ltd. All Rights Reserved.</p>
+      <p class="footer-craft">Crafted for the cinema.</p>
     </div>
-  </div>
+  </footer>
 
-  <!-- 5. COPYWRITING RULES -->
-  <div class="bb-section">
-    <div class="bb-subtitle">05 — Copy Rules</div>
-    <h2 class="bb-title">WRITE LIKE<br>A DIRECTOR</h2>
-
-    <div class="forbidden-grid">
-      <div class="fg-col fg-bad">
-        <h3>Never Write This</h3>
-        <div class="fg-item">"We are passionate about creative storytelling."</div>
-        <div class="fg-item">"End-to-end production solutions."</div>
-        <div class="fg-item">"Delivering impactful content."</div>
-        <div class="fg-item">"Creative agency with years of experience."</div>
-        <div class="fg-item">"We understand your brand's vision."</div>
-        <div class="fg-item">"Innovative storytelling for today's digital world."</div>
-        <div class="fg-item">"We are committed to excellence."</div>
-      </div>
-      <div class="fg-col fg-good">
-        <h3>Write This Instead</h3>
-        <div class="fg-item">"Cinema is the highest form of strategy."</div>
-        <div class="fg-item">"We direct the moment before the purchase decision."</div>
-        <div class="fg-item">"Every second earns its place in the edit."</div>
-        <div class="fg-item">"Born in Ahmedabad. Trusted by India's best brands."</div>
-        <div class="fg-item">"The reel doesn't lie. Neither do we."</div>
-        <div class="fg-item">"Made for screens that matter."</div>
-        <div class="fg-item">"We make films that outlive the campaign."</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 6. MOTION SYSTEM -->
-  <div class="bb-section">
-    <div class="bb-subtitle">06 — Motion System</div>
-    <h2 class="bb-title">CINEMATIC<br>MOTION</h2>
-    <p style="font-size: 0.9rem; color: var(--c-text-mid); max-width: 600px; margin-bottom: 3rem; line-height: 1.7;">
-      Every animation is a directorial choice. Inspired by Monks.com's motion hierarchy — deliberate, weighty, emotionally calibrated. GSAP + Lenis + film-inspired easing.
-    </p>
-
-    <div class="motion-grid">
-      <div class="motion-card">
-        <div class="mc-icon">◈</div>
-        <div class="mc-title">Cinematic Loader</div>
-        <p class="mc-desc">Film countdown (5→1), filmstrip holes, progress bar, logo reveal. Sets the cinematic tone before a single scroll.</p>
-        <div class="mc-spec">duration: 2.2s · ease: power2.inOut</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">⊙</div>
-        <div class="mc-title">Hero Word Reveal</div>
-        <p class="mc-desc">Clip-path inset(0 0 100% → 0) per word, staggered 180ms. Feels like a title card appearing from darkness.</p>
-        <div class="mc-spec">stagger: 0.18s · ease: power4.out · clip-path</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◎</div>
-        <div class="mc-title">Custom Cursor</div>
-        <p class="mc-desc">Dual-ring cursor — tight dot (lerp 0.9) + lagging ring (lerp 0.14). Expands on hover, shows VIEW label on film cards.</p>
-        <div class="mc-spec">lerp: 0.9 / 0.14 · magnetic: ±25px</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◇</div>
-        <div class="mc-title">Scroll Parallax</div>
-        <p class="mc-desc">Hero background drifts at 15% slower than scroll rate. Creates depth without being distracting. Lenis + ScrollTrigger scrub.</p>
-        <div class="mc-spec">scrub: 1.5 · yPercent: 15 · ease: none</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◐</div>
-        <div class="mc-title">Film Grain</div>
-        <p class="mc-desc">Canvas-based animated noise at 4.5% opacity, mix-blend-mode: overlay. Runs at 60fps. Gives the screen the texture of film stock.</p>
-        <div class="mc-spec">opacity: 0.045 · blend: overlay · 60fps canvas</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◉</div>
-        <div class="mc-title">Magnetic Buttons</div>
-        <p class="mc-desc">Primary CTAs magnetically attract to cursor within a 30% offset radius. Elastic snap-back on mouseleave.</p>
-        <div class="mc-spec">offset: ×0.25 · elastic.out(1, 0.4) · 0.8s</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◫</div>
-        <div class="mc-title">Card Tilt</div>
-        <p class="mc-desc">Film and director cards respond to mouse with subtle 3D perspective tilt (max ±6°). Resets with elastic spring.</p>
-        <div class="mc-spec">rotateX/Y: ±6° · perspective: 800 · elastic.out</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◬</div>
-        <div class="mc-title">Section Reveals</div>
-        <p class="mc-desc">Each section element animates in from below (y: 30px → 0) or left/right on ScrollTrigger. Staggered for groups.</p>
-        <div class="mc-spec">y: 30px → 0 · once: true · power3.out · 0.9s</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◭</div>
-        <div class="mc-title">Manifesto Words</div>
-        <p class="mc-desc">Each word in the manifesto reveals individually with 60ms stagger — as if being typed by a projectionist.</p>
-        <div class="mc-spec">stagger: 60ms · opacity: 0→1 · translateY: 40→0</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◮</div>
-        <div class="mc-title">Marquee Speed</div>
-        <p class="mc-desc">Award/title marquee reverses direction on scroll-up. Slight acceleration on fast scroll. Pause on hover (via CSS).</p>
-        <div class="mc-spec">animation: 30s linear infinite · scroll-aware</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◯</div>
-        <div class="mc-title">Light Leak Effect</div>
-        <p class="mc-desc">Hero light leak follows mouse position at 30% offset, creating the illusion of a real projector responding to presence.</p>
-        <div class="mc-spec">gsap.to: x/y mouse×0.3 · duration: 2s · power1.out</div>
-      </div>
-      <div class="motion-card">
-        <div class="mc-icon">◰</div>
-        <div class="mc-title">Film Burn Transition</div>
-        <p class="mc-desc">On high-velocity scroll, a subtle amber flash overlay fires — evoking the physical film burn between projector reels.</p>
-        <div class="mc-spec">opacity: velocity/300 · maxOpacity: 0.12 · 100ms flash</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 7. CASE STUDY FORMAT -->
-  <div class="bb-section">
-    <div class="bb-subtitle">07 — Case Study Architecture</div>
-    <h2 class="bb-title">HOW WE<br>TELL WORK</h2>
-    <p style="font-size: 0.9rem; color: var(--c-text-mid); max-width: 600px; margin-bottom: 3rem; line-height: 1.7;">
-      Every case study is a short film about a film. It should feel editorial, cinematic, and emotionally resonant — not a bullet-point portfolio piece.
-    </p>
-
-    <div class="cs-format-grid">
-      <div class="cs-format-card">
-        <div class="csf-num">01</div>
-        <div class="csf-title">The Cinematic Intro</div>
-        <p class="csf-desc">Hero image/reel, film title card format, key metadata (director, year, format, recognition). Sets scene before context.</p>
-      </div>
-      <div class="cs-format-card">
-        <div class="csf-num">02</div>
-        <div class="csf-title">The Insight</div>
-        <p class="csf-desc">What truth drove this project? Not "the brief" — the human insight. The thing that made this worth making at all.</p>
-      </div>
-      <div class="cs-format-card">
-        <div class="csf-num">03</div>
-        <div class="csf-title">Visual Language</div>
-        <p class="csf-desc">How did we light it? What palette? What framing grammar? The aesthetic decisions and the reasoning behind them.</p>
-      </div>
-      <div class="cs-format-card">
-        <div class="csf-num">04</div>
-        <div class="csf-title">Production Philosophy</div>
-        <p class="csf-desc">Casting, location, rehearsal, the unexpected discoveries. The process, told with the candor of a director's commentary.</p>
-      </div>
-      <div class="cs-format-card">
-        <div class="csf-num">05</div>
-        <div class="csf-title">The Pull Quote</div>
-        <p class="csf-desc">One line from the director, editor, or client that captures what the film achieved. In Playfair italic. Gold. Full bleed.</p>
-      </div>
-      <div class="cs-format-card">
-        <div class="csf-num">06</div>
-        <div class="csf-title">Impact Storytelling</div>
-        <p class="csf-desc">Not metrics first. Cultural impact first. Awards, conversations started, audiences moved. Data follows feeling.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 8. PAGE STRUCTURE -->
-  <div class="bb-section" style="border-bottom: none;">
-    <div class="bb-subtitle">08 — Complete Site Architecture</div>
-    <h2 class="bb-title">SITE MAP</h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Primary</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Home</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">The full cinematic experience</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Work</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Films</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Full filmography + case studies</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Work</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Commercials</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Branded content portfolio</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">People</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Directors</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Extended director profiles</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Studio</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">About</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Origin story + timeline</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Editorial</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Journal</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Essays on cinema + craft</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Culture</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Careers</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Join the universe</div>
-      </div>
-      <div style="padding: 1.5rem; border: 1px solid var(--c-border);">
-        <div style="font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; color: var(--c-kodak); margin-bottom: 0.75rem; text-transform: uppercase;">Begin</div>
-        <div style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--c-cream);">Contact</div>
-        <div style="font-size: 0.75rem; color: var(--c-text-muted); margin-top: 0.3rem;">Cinematic project brief</div>
-      </div>
-    </div>
-  </div>
-
-  <div style="padding: 4rem var(--pad-x); background: var(--c-surface); text-align: center;">
-    <p style="font-family: var(--font-display); font-size: 1.5rem; font-style: italic; color: var(--c-projector); margin-bottom: 1rem;">"Every frame is a manifesto."</p>
-    <p style="font-size: 0.7rem; color: var(--c-text-muted); letter-spacing: 0.1em;">— CineMan Productions Brand Bible v1.0 · 2024</p>
-    <a href="index.html" style="display: inline-block; margin-top: 2rem; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--c-black); background: var(--c-kodak); padding: 0.75rem 1.75rem;">← Back to Website</a>
-  </div>
-
-  <script>
-    // Minimal grain for brand bible
-    const canvas = document.getElementById('grain-canvas');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      function grain() {
-        const d = ctx.createImageData(canvas.width, canvas.height);
-        for (let i = 0; i < d.data.length; i += 4) {
-          const v = (Math.random() * 255) | 0;
-          d.data[i] = d.data[i+1] = d.data[i+2] = v;
-          d.data[i+3] = 14;
-        }
-        ctx.putImageData(d, 0, 0);
-        requestAnimationFrame(grain);
-      }
-      grain();
-    }
-
-    // Cursor
-    const dot = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    if (dot && ring && !window.matchMedia('(hover: none)').matches) {
-      let m = {x: -100, y: -100}, r = {x: -100, y: -100};
-      document.addEventListener('mousemove', e => { m.x = e.clientX; m.y = e.clientY; });
-      function loop() {
-        r.x += (m.x - r.x) * 0.14;
-        r.y += (m.y - r.y) * 0.14;
-        dot.style.transform = `translate(${m.x}px, ${m.y}px) translate(-50%,-50%)`;
-        ring.style.transform = `translate(${r.x}px, ${r.y}px) translate(-50%,-50%)`;
-        requestAnimationFrame(loop);
-      }
-      loop();
-    }
-  </script>
+  <script src="js/main.js"></script>
 </body>
 </html>
