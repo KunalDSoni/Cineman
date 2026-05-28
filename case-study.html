@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Case Study — Wrong Side Raju — CineMan Productions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .cs-hero {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 var(--pad-x) 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cs-hero-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(160deg, #0a0400 0%, #180d00 40%, #0d0600 100%);
+    }
+    .cs-hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, rgba(8,7,5,0.95) 0%, transparent 60%);
+    }
+    .cs-hero-accent {
+      position: absolute;
+      top: 20%;
+      right: 10%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(200, 150, 46, 0.12) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .cs-hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: var(--max-w);
+      margin: 0 auto;
+      width: 100%;
+    }
+    .cs-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(200, 150, 46, 0.1);
+      border: 1px solid rgba(200, 150, 46, 0.3);
+      padding: 0.4rem 0.8rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--c-projector);
+      margin-bottom: 2rem;
+    }
+    .cs-title {
+      font-family: var(--font-mono);
+      font-size: clamp(4rem, 10vw, 12rem);
+      line-height: 0.88;
+      color: var(--c-cream);
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+    }
+    .cs-title span { color: var(--c-projector); display: block; }
+    .cs-intro-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--c-border);
+      margin-top: 3rem;
+    }
+    @media (max-width: 768px) {
+      .cs-intro-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .cs-intro-item {
+      padding: 1.5rem;
+      border-right: 1px solid var(--c-border);
+    }
+    .cs-intro-item:last-child { border-right: none; }
+    .cs-intro-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--c-text-muted);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .cs-intro-value {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--c-cream);
+    }
+    .cs-body {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 var(--pad-x);
+    }
+    .cs-chapter {
+      padding: 6rem 0;
+      border-bottom: 1px solid var(--c-border);
+    }
+    .cs-chapter-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--c-kodak);
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+    .cs-chapter-title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 700;
+      color: var(--c-cream);
+      line-height: 1.1;
+      margin-bottom: 2rem;
+    }
+    .cs-chapter-title em { color: var(--c-projector); font-style: italic; }
+    .cs-body-text {
+      font-size: 1.05rem;
+      color: var(--c-text-mid);
+      line-height: 1.85;
+      max-width: 680px;
+    }
+    .cs-body-text + .cs-body-text { margin-top: 1.5rem; }
+    .cs-pullquote {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+      font-style: italic;
+      font-weight: 700;
+      color: var(--c-projector);
+      border-left: 3px solid var(--c-kodak);
+      padding-left: 2rem;
+      margin: 4rem 0;
+      line-height: 1.4;
+    }
+    .cs-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+    @media (max-width: 768px) {
+      .cs-split { grid-template-columns: 1fr; gap: 2rem; }
+    }
+    .cs-visual-block {
+      aspect-ratio: 4/3;
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .cs-visual-inner {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #0f0600 0%, #2a1000 50%, #1a0b00 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cs-visual-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--c-text-muted);
+    }
+    .cs-stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border: 1px solid var(--c-border);
+      margin-top: 4rem;
+    }
+    @media (max-width: 600px) {
+      .cs-stats-row { grid-template-columns: 1fr; }
+    }
+    .cs-stat-cell {
+      padding: 2.5rem;
+      border-right: 1px solid var(--c-border);
+      text-align: center;
+    }
+    .cs-stat-cell:last-child { border-right: none; }
+    .cs-stat-big {
+      font-family: var(--font-mono);
+      font-size: 3.5rem;
+      color: var(--c-projector);
+      display: block;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .cs-stat-desc {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--c-text-muted);
+    }
+    .cs-nav-projects {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-top: 1px solid var(--c-border);
+    }
+    @media (max-width: 600px) {
+      .cs-nav-projects { grid-template-columns: 1fr; }
+    }
+    .cs-nav-project {
+      padding: 3rem var(--pad-x);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      transition: background 0.3s;
+      border-right: 1px solid var(--c-border);
+    }
+    .cs-nav-project:last-child { border-right: none; }
+    .cs-nav-project:hover { background: var(--c-surface); }
+    .cs-nav-dir {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--c-text-muted);
+    }
+    .cs-nav-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--c-cream);
+    }
+    .cs-nav-title em { color: var(--c-projector); font-style: italic; }
+  </style>
+</head>
+<body>
+  <canvas id="grain-canvas" aria-hidden="true"></canvas>
+  <div class="cursor-dot" id="cursor-dot"></div>
+  <div class="cursor-ring" id="cursor-ring"></div>
+  <div class="cursor-label" id="cursor-label">VIEW</div>
+
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-mark">C</span><span class="nav-logo-text">INEMAN</span>
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="films.html" class="nav-link">Films</a></li>
+        <li><a href="index.html#work" class="nav-link">Work</a></li>
+        <li><a href="index.html#studio" class="nav-link">Studio</a></li>
+      </ul>
+      <div class="nav-end">
+        <a href="index.html#contact" class="nav-cta">Let's Create</a>
+        <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- CASE STUDY HERO -->
+    <header class="cs-hero">
+      <div class="cs-hero-bg"></div>
+      <div class="cs-hero-accent"></div>
+      <div class="cs-hero-content">
+        <div class="cs-badge">◆ National Award · Best Gujarati Film · 2017</div>
+        <h1 class="cs-title">WRONG SIDE<span>RAJU</span></h1>
+        <p class="page-sub" style="margin-bottom: 0;">A story of justice, class, and what it means to be human — told through a single road accident that changes everything.</p>
+        <div class="cs-intro-grid">
+          <div class="cs-intro-item">
+            <span class="cs-intro-label">Director</span>
+            <span class="cs-intro-value">Abhishek Jain</span>
+          </div>
+          <div class="cs-intro-item">
+            <span class="cs-intro-label">Release Year</span>
+            <span class="cs-intro-value">2016</span>
+          </div>
+          <div class="cs-intro-item">
+            <span class="cs-intro-label">Category</span>
+            <span class="cs-intro-value">Feature Film</span>
+          </div>
+          <div class="cs-intro-item">
+            <span class="cs-intro-label">Recognition</span>
+            <span class="cs-intro-value" style="color: var(--c-projector);">National Award</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CASE STUDY BODY -->
+    <div class="cs-body">
+
+      <!-- THE INSIGHT -->
+      <div class="cs-chapter">
+        <span class="cs-chapter-label">The Insight</span>
+        <h2 class="cs-chapter-title">A collision of <em>worlds,</em><br>not just vehicles.</h2>
+        <p class="cs-body-text">
+          Wrong Side Raju was not designed to be a message film. It was designed to be an honest one. The story begins with an accident — a wealthy car, a motorcycle, a moment of impact — and then asks a deeper question: in a country where class determines consequence, what does justice actually look like?
+        </p>
+        <p class="cs-body-text">
+          The insight that drove every frame: Gujarati audiences were ready to see themselves honestly. They had grown comfortable with feel-good cinema — CineMan's own earlier films included. Wrong Side Raju was the deliberate choice to go further, to push the mirror closer, and to trust that the audience would not look away.
+        </p>
+        <blockquote class="cs-pullquote">
+          "We wanted to make a film where both characters are right and both characters are wrong.
+          That moral ambiguity is where real life lives."
+        </blockquote>
+      </div>
+
+      <!-- VISUAL LANGUAGE -->
+      <div class="cs-chapter">
+        <span class="cs-chapter-label">Visual Language</span>
+        <h2 class="cs-chapter-title">Tungsten light.<br><em>Real locations.</em><br>Unguarded faces.</h2>
+        <div class="cs-split">
+          <div>
+            <p class="cs-body-text">
+              The visual philosophy was built around intimacy. The camera was never supposed to be invisible — it was supposed to feel like a witness. Handheld, close, slightly uncomfortable. The cinematography leaned into practical light: the harsh afternoon sun of Ahmedabad, the sodium glow of street lamps, the blue-white of hospital corridors.
+            </p>
+            <p class="cs-body-text" style="margin-top: 1.5rem;">
+              Color grading pulled toward the warm desaturation of real memory — not the heightened tones of escapist cinema, but the lived-in palette of a city that doesn't dress up for cameras. Every frame was graded to feel like something you have seen before.
+            </p>
+          </div>
+          <div class="cs-visual-block">
+            <div class="cs-visual-inner">
+              <span class="cs-visual-label">[ Film Still Placeholder ]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTION PHILOSOPHY -->
+      <div class="cs-chapter">
+        <span class="cs-chapter-label">Production Philosophy</span>
+        <h2 class="cs-chapter-title">Cast from <em>truth,</em><br>not from type.</h2>
+        <p class="cs-body-text">
+          The casting of Wrong Side Raju was a philosophical decision as much as a creative one. Abhishek Jain sought performers who carried the specific social weight of their characters in their bodies — not actors playing class, but actors who understood it from the inside.
+        </p>
+        <p class="cs-body-text" style="margin-top: 1.5rem;">
+          Rehearsals were extensive and improvisational. The script was a structure, not a cage. Certain scenes were rewritten on location when the reality of the place revealed something the writing had not anticipated. This responsiveness — the willingness to let the world inform the story — is a signature of how CineMan approaches all its productions.
+        </p>
+        <div class="cs-split" style="margin-top: 3rem;">
+          <div class="cs-visual-block">
+            <div class="cs-visual-inner">
+              <span class="cs-visual-label">[ Behind The Scenes ]</span>
+            </div>
+          </div>
+          <div>
+            <p class="cs-body-text">
+              The locations were Ahmedabad — fully, specifically, unromanticized. The city's ring roads, its courtrooms, its upper-middle-class drawing rooms and working-class chawls. The geographical specificity was part of the honesty: this story happens here, in this city, because these social dynamics are alive here.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPACT -->
+      <div class="cs-chapter" style="border-bottom: none;">
+        <span class="cs-chapter-label">Impact</span>
+        <h2 class="cs-chapter-title">What the film <em>moved.</em></h2>
+        <p class="cs-body-text">
+          Wrong Side Raju won the 64th National Film Award for Best Gujarati Film. But the recognition that mattered most was quieter: the number of Gujarati audiences who saw themselves in both characters. The conversations the film sparked in homes, in college debates, in newspaper columns about class and privilege and the machinery of justice.
+        </p>
+        <div class="cs-stats-row">
+          <div class="cs-stat-cell">
+            <span class="cs-stat-big">64th</span>
+            <span class="cs-stat-desc">National Film Awards</span>
+          </div>
+          <div class="cs-stat-cell">
+            <span class="cs-stat-big">01</span>
+            <span class="cs-stat-desc">National Award Won</span>
+          </div>
+          <div class="cs-stat-cell">
+            <span class="cs-stat-big">∞</span>
+            <span class="cs-stat-desc">Conversations Started</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PROJECT NAVIGATION -->
+    <nav class="cs-nav-projects" aria-label="Other projects">
+      <a href="films.html" class="cs-nav-project">
+        <span class="cs-nav-dir">← Previous Film</span>
+        <span class="cs-nav-title">Bey <em>Yaar</em></span>
+      </a>
+      <a href="films.html" class="cs-nav-project" style="text-align: right; align-items: flex-end;">
+        <span class="cs-nav-dir">See All Films →</span>
+        <span class="cs-nav-title">The <em>Filmography</em></span>
+      </a>
+    </nav>
+
+  </main>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="margin-top: 0;">
+      <p class="footer-copy">© 2024 CineMan Productions. All Rights Reserved.</p>
+      <a href="index.html" class="footer-craft" style="color: var(--c-kodak);">← Back to Home</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const loader = document.getElementById('loader');
+      if (loader) loader.style.display = 'none';
+      document.body.style.overflow = '';
+    });
+  </script>
+</body>
+</html>

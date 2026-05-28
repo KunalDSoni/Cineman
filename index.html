@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CineMan Productions — A Cinematic Storytelling Universe. From reviving Gujarati cinema to crafting global brand storytelling.">
+  <meta property="og:title" content="CineMan Productions">
+  <meta property="og:description" content="From the heart of Gujarat to the conscience of global storytelling.">
+  <title>CineMan Productions — Cinematic Storytelling Universe</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,700;1,900&family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lenis Smooth Scroll -->
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FILM GRAIN OVERLAY                          -->
+  <!-- ═══════════════════════════════════════════ -->
+  <canvas id="grain-canvas" aria-hidden="true"></canvas>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CUSTOM CURSOR                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
+  <div class="cursor-label" id="cursor-label" aria-hidden="true">VIEW</div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CINEMATIC LOADER                            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader-filmstrip">
+      <div class="loader-film-holes top">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="loader-countdown">
+        <span class="loader-num" id="loader-num">5</span>
+      </div>
+      <div class="loader-film-holes bottom">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
+    </div>
+    <div class="loader-identity">
+      <span class="loader-c">C</span><span class="loader-brand">INEMAN</span>
+    </div>
+    <div class="loader-tagline-wrap">
+      <span class="loader-tag">PRODUCTIONS · EST. 2010 · AHMEDABAD</span>
+    </div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar" id="loader-bar"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FULLSCREEN MENU OVERLAY                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="menu-overlay" id="menu-overlay">
+    <div class="menu-overlay-inner">
+      <nav class="menu-nav">
+        <a href="#films" class="menu-nav-link" data-index="01">
+          <span class="menu-link-index">01</span>
+          <span class="menu-link-text">Films</span>
+        </a>
+        <a href="#work" class="menu-nav-link" data-index="02">
+          <span class="menu-link-index">02</span>
+          <span class="menu-link-text">Commercials</span>
+        </a>
+        <a href="#directors" class="menu-nav-link" data-index="03">
+          <span class="menu-link-index">03</span>
+          <span class="menu-link-text">Directors</span>
+        </a>
+        <a href="#studio" class="menu-nav-link" data-index="04">
+          <span class="menu-link-index">04</span>
+          <span class="menu-link-text">Studio</span>
+        </a>
+        <a href="#awards" class="menu-nav-link" data-index="05">
+          <span class="menu-link-index">05</span>
+          <span class="menu-link-text">Awards</span>
+        </a>
+        <a href="#services" class="menu-nav-link" data-index="06">
+          <span class="menu-link-index">06</span>
+          <span class="menu-link-text">Work</span>
+        </a>
+        <a href="#contact" class="menu-nav-link" data-index="07">
+          <span class="menu-link-index">07</span>
+          <span class="menu-link-text">Contact</span>
+        </a>
+      </nav>
+      <div class="menu-footer">
+        <p>National Award Winning · OTT Pioneers · Ahmedabad · India</p>
+        <a href="mailto:hello@cineman.in">hello@cineman.in</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- NAVIGATION                                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo" aria-label="CineMan Productions">
+        <span class="nav-logo-mark">C</span><span class="nav-logo-text">INEMAN</span>
+      </a>
+      <ul class="nav-links" role="list">
+        <li><a href="#films" class="nav-link">Films</a></li>
+        <li><a href="#work" class="nav-link">Work</a></li>
+        <li><a href="#studio" class="nav-link">Studio</a></li>
+        <li><a href="#directors" class="nav-link">Directors</a></li>
+      </ul>
+      <div class="nav-end">
+        <a href="#contact" class="nav-cta">Let's Create</a>
+        <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- HERO SECTION                                -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="hero" id="hero">
+      <div class="hero-media">
+        <!-- Cinematic gradient stand-in for video -->
+        <div class="hero-cinema-bg"></div>
+        <div class="hero-light-leak"></div>
+        <div class="hero-vignette"></div>
+        <div class="hero-scanlines"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-line"></span>
+          <span class="eyebrow-label">CineMan Productions — Since 2010</span>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="hero-word" data-word>CINEMA</span>
+          <span class="hero-word" data-word>WITHOUT</span>
+          <span class="hero-word hero-word--gold" data-word>COMPROMISE.</span>
+        </h1>
+
+        <p class="hero-sub">
+          From the heart of Gujarat<br>
+          to the conscience of global storytelling.
+        </p>
+
+        <div class="hero-actions">
+          <a href="#work" class="btn-primary">
+            <span>Watch Our Reel</span>
+            <span class="btn-arrow">→</span>
+          </a>
+          <a href="#films" class="btn-ghost">Explore Films</a>
+        </div>
+      </div>
+
+      <div class="hero-stats" aria-label="CineMan stats">
+        <div class="hero-stat">
+          <span class="stat-num">15<span class="stat-plus">+</span></span>
+          <span class="stat-name">Feature Films</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="stat-num">01</span>
+          <span class="stat-name">National Award</span>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <span class="stat-num">14</span>
+          <span class="stat-name">Years of Cinema</span>
+        </div>
+      </div>
+
+      <div class="hero-scroll-cue" aria-hidden="true">
+        <span class="scroll-label">SCROLL</span>
+        <span class="scroll-track"><span class="scroll-thumb"></span></span>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MARQUEE STRIP                               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div class="marquee-strip" aria-hidden="true">
+      <div class="marquee-track" id="marquee-track">
+        <span>National Award Winner</span><span class="sep">◆</span>
+        <span>Kevi Rite Jaish</span><span class="sep">◆</span>
+        <span>Wrong Side Raju</span><span class="sep">◆</span>
+        <span>Bey Yaar</span><span class="sep">◆</span>
+        <span>OHO Gujarati OTT</span><span class="sep">◆</span>
+        <span>Phantom Films</span><span class="sep">◆</span>
+        <span>Est. Ahmedabad 2010</span><span class="sep">◆</span>
+        <span>Branded Storytelling</span><span class="sep">◆</span>
+        <span>National Award Winner</span><span class="sep">◆</span>
+        <span>Kevi Rite Jaish</span><span class="sep">◆</span>
+        <span>Wrong Side Raju</span><span class="sep">◆</span>
+        <span>Bey Yaar</span><span class="sep">◆</span>
+        <span>OHO Gujarati OTT</span><span class="sep">◆</span>
+        <span>Phantom Films</span><span class="sep">◆</span>
+        <span>Est. Ahmedabad 2010</span><span class="sep">◆</span>
+        <span>Branded Storytelling</span><span class="sep">◆</span>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MANIFESTO SECTION                           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="manifesto" id="manifesto">
+      <div class="manifesto-inner">
+        <blockquote class="manifesto-statement">
+          <span class="m-token">We</span>
+          <span class="m-token">don't</span>
+          <span class="m-token">make</span>
+          <span class="m-token m-gold">films.</span>
+          <br aria-hidden="true">
+          <span class="m-token">We</span>
+          <span class="m-token">engineer</span>
+          <span class="m-token m-gold">feeling.</span>
+        </blockquote>
+        <p class="manifesto-sub">
+          Born in Ahmedabad. Raised by stories.
+          Fourteen years of frames that changed
+          how a region saw itself on screen —
+          and how the world heard its voice.
+        </p>
+        <div class="manifesto-line"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- FILMS SECTION                               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="films-section" id="films">
+      <div class="section-header">
+        <div class="section-meta">
+          <span class="section-chapter">Chapter 01</span>
+          <span class="section-rule"></span>
+        </div>
+        <h2 class="section-title">The Films</h2>
+        <p class="section-desc">Cinema that rewrote the rules of Gujarati storytelling.</p>
+      </div>
+
+      <div class="films-grid">
+
+        <article class="film-card film-card--hero" data-film="kevi-rite-jaish">
+          <div class="film-bg">
+            <div class="film-gradient" style="--g1:#1a0f00; --g2:#3d2200;"></div>
+          </div>
+          <div class="film-overlay-gfx">
+            <div class="film-light-ray"></div>
+          </div>
+          <div class="film-meta-top">
+            <span class="film-year-badge">2012</span>
+            <span class="film-type">Feature Film</span>
+          </div>
+          <div class="film-body">
+            <h3 class="film-name">Kevi Rite<br><em>Jaish</em></h3>
+            <p class="film-logline">The film that reignited Gujarati cinema. A love story that became a cultural movement.</p>
+            <span class="film-genre">Comedy Drama · Regional Revival</span>
+          </div>
+          <a href="#" class="film-explore" aria-label="Explore Kevi Rite Jaish">
+            <span>Explore</span>
+            <span class="fe-arrow">→</span>
+          </a>
+        </article>
+
+        <article class="film-card" data-film="bey-yaar">
+          <div class="film-bg">
+            <div class="film-gradient" style="--g1:#0d0d00; --g2:#2a2800;"></div>
+          </div>
+          <div class="film-meta-top">
+            <span class="film-year-badge">2014</span>
+            <span class="film-type">Feature Film</span>
+          </div>
+          <div class="film-body">
+            <h3 class="film-name">Bey<br><em>Yaar</em></h3>
+            <p class="film-logline">A generational friendship told with rare emotional precision. Gujarat's answer to camaraderie.</p>
+            <span class="film-genre">Drama · Friendship</span>
+          </div>
+          <a href="#" class="film-explore" aria-label="Explore Bey Yaar">
+            <span>Explore</span>
+            <span class="fe-arrow">→</span>
+          </a>
+        </article>
+
+        <article class="film-card film-card--national-award" data-film="wrong-side-raju">
+          <div class="film-bg">
+            <div class="film-gradient" style="--g1:#0a0500; --g2:#201000;"></div>
+          </div>
+          <div class="film-overlay-gfx">
+            <div class="film-award-glow"></div>
+          </div>
+          <div class="film-meta-top">
+            <span class="film-year-badge">2016</span>
+            <span class="film-type award-type">National Award ◆</span>
+          </div>
+          <div class="film-body">
+            <h3 class="film-name">Wrong Side<br><em>Raju</em></h3>
+            <p class="film-logline">National Award winning. A story of justice, class, and what it means to be truly human.</p>
+            <span class="film-genre">Drama · Social · Award-Winning</span>
+          </div>
+          <a href="#" class="film-explore" aria-label="Explore Wrong Side Raju">
+            <span>Explore</span>
+            <span class="fe-arrow">→</span>
+          </a>
+        </article>
+
+      </div>
+
+      <div class="films-cta-row">
+        <a href="#" class="link-arrow">View All Films <span>→</span></a>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- BRAND WORK / COMMERCIALS SECTION            -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="work-section" id="work">
+      <div class="work-intro">
+        <div class="section-meta">
+          <span class="section-chapter">Chapter 02</span>
+          <span class="section-rule"></span>
+        </div>
+        <h2 class="section-title">Brand Storytelling</h2>
+        <p class="section-desc">Cinema for brands that want to be remembered.</p>
+      </div>
+
+      <div class="work-showcase" id="work-showcase">
+
+        <div class="work-item is-active" data-work="0">
+          <div class="work-visual">
+            <div class="work-visual-bg" style="background: linear-gradient(135deg, #0f0800 0%, #2a1800 50%, #1a0d00 100%);">
+              <div class="work-visual-overlay"></div>
+              <div class="work-frame-markers">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="work-details">
+            <span class="work-cat">Commercial · Brand Film</span>
+            <h3 class="work-name">The 60-Second<br><em>Manifesto</em></h3>
+            <p class="work-desc">Premium commercial filmmaking where every second is scripted for emotion. We don't sell products — we create desire.</p>
+            <a href="#" class="link-arrow">Case Study <span>→</span></a>
+          </div>
+        </div>
+
+        <div class="work-item" data-work="1">
+          <div class="work-visual">
+            <div class="work-visual-bg" style="background: linear-gradient(135deg, #080b00 0%, #1c240a 50%, #0d1400 100%);">
+              <div class="work-visual-overlay"></div>
+              <div class="work-frame-markers">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="work-details">
+            <span class="work-cat">Founder Story · Documentary</span>
+            <h3 class="work-name">The Human<br><em>Behind the Brand</em></h3>
+            <p class="work-desc">Founder narratives that transform business stories into cultural mythology. The visionary, unfiltered.</p>
+            <a href="#" class="link-arrow">Case Study <span>→</span></a>
+          </div>
+        </div>
+
+        <div class="work-item" data-work="2">
+          <div class="work-visual">
+            <div class="work-visual-bg" style="background: linear-gradient(135deg, #00080f 0%, #001824 50%, #000d1a 100%);">
+              <div class="work-visual-overlay"></div>
+              <div class="work-frame-markers">
+                <span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+          <div class="work-details">
+            <span class="work-cat">OTT Content · Series</span>
+            <h3 class="work-name">Stories for<br><em>New Screens</em></h3>
+            <p class="work-desc">Digital-native storytelling built for the OTT generation. OHO Gujarati and beyond — content that connects across screens.</p>
+            <a href="#" class="link-arrow">Case Study <span>→</span></a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="work-controls">
+        <button class="work-btn" id="work-prev" aria-label="Previous work">
+          <span>←</span>
+        </button>
+        <div class="work-counter">
+          <span id="work-curr">01</span>
+          <span class="work-slash">/</span>
+          <span class="work-total">03</span>
+        </div>
+        <button class="work-btn" id="work-next" aria-label="Next work">
+          <span>→</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CINEMATIC FULLWIDTH STATEMENT               -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="statement-section">
+      <div class="statement-inner">
+        <p class="statement-text" id="statement-text">
+          We were born in a theatre in Ahmedabad.
+          We grew up on projector light and the silence
+          between scenes. Now we build that silence —
+          for brands, for stories, for the world.
+        </p>
+        <div class="statement-credit">
+          — Abhishek Jain, Mikhil Musale & Anish Shah
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- STUDIO / ABOUT SECTION                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="studio-section" id="studio">
+      <div class="studio-layout">
+
+        <div class="studio-left">
+          <div class="section-meta">
+            <span class="section-chapter">Chapter 03</span>
+            <span class="section-rule"></span>
+          </div>
+          <h2 class="studio-headline">
+            Not a<br>Production House.<br>
+            <em>A Cinematic<br>Universe.</em>
+          </h2>
+          <p class="studio-body">
+            CineMan was born in 2010 when three storytellers — Abhishek Jain, Mikhil Musale, and Anish Shah — decided that Gujarati cinema deserved to be taken seriously.
+          </p>
+          <p class="studio-body">
+            What began as a regional experiment became a national reckoning. Wrong Side Raju won the National Award. OHO Gujarati built a streaming platform for an entire language. And now, CineMan channels that same storytelling precision into premium branded content for brands that want to move people.
+          </p>
+          <a href="#contact" class="btn-primary mt">Start a Project</a>
+        </div>
+
+        <div class="studio-right">
+          <div class="timeline" role="list">
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2010</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">Founded in Ahmedabad by three filmmakers with one mission: stories that matter.</p>
+            </div>
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2012</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">Kevi Rite Jaish — The spark that reignited Gujarati cinema.</p>
+            </div>
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2014</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">Bey Yaar — Gujarati cinema finds its emotional language.</p>
+            </div>
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2016</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">Wrong Side Raju — National Award. The world begins to listen.</p>
+            </div>
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2019</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">Phantom Films collaboration — Storytelling reaches new altitude.</p>
+            </div>
+            <div class="tl-item" role="listitem">
+              <span class="tl-year">2021</span>
+              <div class="tl-connector"><span class="tl-dot"></span></div>
+              <p class="tl-event">OHO Gujarati — Building the future of regional OTT streaming.</p>
+            </div>
+            <div class="tl-item tl-item--now" role="listitem">
+              <span class="tl-year tl-year--now">Now</span>
+              <div class="tl-connector"><span class="tl-dot tl-dot--now"></span></div>
+              <p class="tl-event">Premium branded storytelling. Global ambitions. Cinematic precision.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- DIRECTORS SECTION                           -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="directors-section" id="directors">
+      <div class="section-header">
+        <div class="section-meta">
+          <span class="section-chapter">Chapter 04</span>
+          <span class="section-rule"></span>
+        </div>
+        <h2 class="section-title">The Visionaries</h2>
+        <p class="section-desc">Three filmmakers who dared to dream in a different language.</p>
+      </div>
+
+      <div class="directors-grid">
+
+        <div class="director-card">
+          <div class="director-portrait">
+            <div class="portrait-placeholder" style="--hue: 35;">
+              <span class="portrait-initial">AJ</span>
+            </div>
+            <div class="portrait-overlay"></div>
+          </div>
+          <div class="director-body">
+            <h3 class="director-name">Abhishek Jain</h3>
+            <span class="director-role">Founder · Director</span>
+            <p class="director-bio">The architect of CineMan's cinematic voice. Known for Kevi Rite Jaish and Wrong Side Raju. A filmmaker who treats every scene as a philosophical argument.</p>
+            <a href="#" class="link-arrow sm">View Profile <span>→</span></a>
+          </div>
+        </div>
+
+        <div class="director-card">
+          <div class="director-portrait">
+            <div class="portrait-placeholder" style="--hue: 45;">
+              <span class="portrait-initial">MM</span>
+            </div>
+            <div class="portrait-overlay"></div>
+          </div>
+          <div class="director-body">
+            <h3 class="director-name">Mikhil Musale</h3>
+            <span class="director-role">Founder · Director</span>
+            <p class="director-bio">The emotional engineer. Creator of Bey Yaar and master of intimate Gujarati storytelling. His camera finds truth in the unsaid.</p>
+            <a href="#" class="link-arrow sm">View Profile <span>→</span></a>
+          </div>
+        </div>
+
+        <div class="director-card">
+          <div class="director-portrait">
+            <div class="portrait-placeholder" style="--hue: 28;">
+              <span class="portrait-initial">AS</span>
+            </div>
+            <div class="portrait-overlay"></div>
+          </div>
+          <div class="director-body">
+            <h3 class="director-name">Anish Shah</h3>
+            <span class="director-role">Founder · Producer</span>
+            <p class="director-bio">The strategic mind who turned regional cinema into national conversation. Architect of CineMan's expansion into branded content and OTT.</p>
+            <a href="#" class="link-arrow sm">View Profile <span>→</span></a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- AWARDS SECTION                              -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="awards-section" id="awards">
+      <div class="awards-layout">
+
+        <div class="awards-left">
+          <div class="section-meta">
+            <span class="section-chapter">Recognition</span>
+            <span class="section-rule"></span>
+          </div>
+          <h2 class="awards-headline">
+            Work that<br>
+            <em>echoes.</em>
+          </h2>
+          <p class="awards-sub">Cinema leaves a mark. These are ours.</p>
+        </div>
+
+        <div class="awards-right">
+          <div class="award-row">
+            <span class="award-mark">◆</span>
+            <div class="award-content">
+              <h4 class="award-title">National Film Award</h4>
+              <p class="award-detail">Wrong Side Raju — Best Gujarati Film</p>
+              <span class="award-yr">2017</span>
+            </div>
+          </div>
+          <div class="award-row">
+            <span class="award-mark">◆</span>
+            <div class="award-content">
+              <h4 class="award-title">Gujarati Cinema Revival</h4>
+              <p class="award-detail">Kevi Rite Jaish — Cultural Landmark Film</p>
+              <span class="award-yr">2012</span>
+            </div>
+          </div>
+          <div class="award-row">
+            <span class="award-mark">◆</span>
+            <div class="award-content">
+              <h4 class="award-title">OTT Platform Pioneer</h4>
+              <p class="award-detail">OHO Gujarati — Regional Streaming First</p>
+              <span class="award-yr">2021</span>
+            </div>
+          </div>
+          <div class="award-row">
+            <span class="award-mark">◆</span>
+            <div class="award-content">
+              <h4 class="award-title">Phantom Films Alliance</h4>
+              <p class="award-detail">Co-production with India's leading indie film house</p>
+              <span class="award-yr">2019</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SERVICES / CAPABILITIES                     -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="services-section" id="services">
+      <div class="section-header">
+        <div class="section-meta">
+          <span class="section-chapter">Capabilities</span>
+          <span class="section-rule"></span>
+        </div>
+        <h2 class="section-title">The Full Spectrum</h2>
+        <p class="section-desc">Every format. Every screen. Every emotion.</p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-item">
+          <span class="svc-num">01</span>
+          <div class="svc-body">
+            <h3 class="svc-name">Feature Films</h3>
+            <p class="svc-desc">Full-length cinema with the emotional depth of literature and the visual language of fine art.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+        <div class="service-item">
+          <span class="svc-num">02</span>
+          <div class="svc-body">
+            <h3 class="svc-name">Branded Films</h3>
+            <p class="svc-desc">Commercial storytelling that transcends advertising. Films brands will carry for decades.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+        <div class="service-item">
+          <span class="svc-num">03</span>
+          <div class="svc-body">
+            <h3 class="svc-name">OTT Content</h3>
+            <p class="svc-desc">Series, documentaries, and digital originals built for streaming-first, attention-scarce audiences.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+        <div class="service-item">
+          <span class="svc-num">04</span>
+          <div class="svc-body">
+            <h3 class="svc-name">Founder Stories</h3>
+            <p class="svc-desc">The human behind the brand. Cinematic portraits of visionaries and the missions that define them.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+        <div class="service-item">
+          <span class="svc-num">05</span>
+          <div class="svc-body">
+            <h3 class="svc-name">Digital Campaigns</h3>
+            <p class="svc-desc">Campaign films built for attention economies. Every second engineered for maximum emotional impact.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+        <div class="service-item">
+          <span class="svc-num">06</span>
+          <div class="svc-body">
+            <h3 class="svc-name">Cinematic Commercials</h3>
+            <p class="svc-desc">The art of the 60-second story. Premium production values for brands that demand the best.</p>
+          </div>
+          <span class="svc-arrow">↗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- JOURNAL / INSIGHT TEASER                    -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="journal-section" id="journal">
+      <div class="section-header">
+        <div class="section-meta">
+          <span class="section-chapter">Journal</span>
+          <span class="section-rule"></span>
+        </div>
+        <h2 class="section-title">The Frame Report</h2>
+        <p class="section-desc">Thoughts on cinema, storytelling, and the future of visual culture.</p>
+      </div>
+
+      <div class="journal-grid">
+        <article class="journal-card journal-card--featured">
+          <div class="jc-meta">
+            <span class="jc-cat">Essay</span>
+            <span class="jc-date">Jan 2024</span>
+          </div>
+          <h3 class="jc-title">Why Regional Cinema is the Most Radical Act in Indian Film Today</h3>
+          <p class="jc-excerpt">The multiplex has a language problem. Regional cinema is the cure — and CineMan was there from the first frame.</p>
+          <a href="#" class="link-arrow">Read Essay <span>→</span></a>
+        </article>
+        <article class="journal-card">
+          <div class="jc-meta">
+            <span class="jc-cat">Craft</span>
+            <span class="jc-date">Nov 2023</span>
+          </div>
+          <h3 class="jc-title">On Shooting Emotion: The CineMan Visual Philosophy</h3>
+          <p class="jc-excerpt">Light is not just technical. It is the first language of truth on a cinema screen.</p>
+          <a href="#" class="link-arrow">Read Essay <span>→</span></a>
+        </article>
+        <article class="journal-card">
+          <div class="jc-meta">
+            <span class="jc-cat">Industry</span>
+            <span class="jc-date">Sep 2023</span>
+          </div>
+          <h3 class="jc-title">Brand Films vs. Ads: A Manifesto on the Difference</h3>
+          <p class="jc-excerpt">Most brands commission ads. The brave ones commission cinema. Here's why the distinction changes everything.</p>
+          <a href="#" class="link-arrow">Read Essay <span>→</span></a>
+        </article>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CONTACT / CTA SECTION                       -->
+    <!-- ═══════════════════════════════════════════ -->
+    <section class="contact-section" id="contact">
+      <div class="contact-inner">
+        <div class="contact-bg-text" aria-hidden="true">BEGIN</div>
+        <div class="contact-content">
+          <span class="section-chapter">Begin</span>
+          <h2 class="contact-headline">
+            Ready to make<br>
+            something<br>
+            <em>unforgettable?</em>
+          </h2>
+          <p class="contact-sub">
+            We work with brands and artists who believe that storytelling is
+            the highest form of strategy. If that sounds like you, let's talk.
+          </p>
+          <div class="contact-actions">
+            <a href="mailto:hello@cineman.in" class="btn-primary btn-large">
+              <span>Start a Conversation</span>
+              <span class="btn-arrow">→</span>
+            </a>
+          </div>
+          <div class="contact-details">
+            <a href="mailto:hello@cineman.in" class="contact-link">hello@cineman.in</a>
+            <span class="contact-sep">·</span>
+            <span class="contact-location">Ahmedabad · Mumbai · India</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- FOOTER                                      -->
+  <!-- ═══════════════════════════════════════════ -->
+  <footer class="footer" id="footer">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-wordmark">
+          <span class="fw-c">C</span><span class="fw-rest">INEMAN</span>
+        </div>
+        <p class="footer-brand-sub">A Cinematic Storytelling Universe</p>
+        <p class="footer-est">Est. 2010 · Ahmedabad, India</p>
+      </div>
+      <div class="footer-nav-grid">
+        <div class="footer-col">
+          <h4 class="fc-title">Studio</h4>
+          <a href="#studio" class="fc-link">About</a>
+          <a href="#directors" class="fc-link">Directors</a>
+          <a href="#awards" class="fc-link">Awards</a>
+          <a href="#" class="fc-link">Careers</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="fc-title">Work</h4>
+          <a href="#films" class="fc-link">Films</a>
+          <a href="#work" class="fc-link">Commercials</a>
+          <a href="#work" class="fc-link">OTT Content</a>
+          <a href="#" class="fc-link">Case Studies</a>
+        </div>
+        <div class="footer-col">
+          <h4 class="fc-title">Connect</h4>
+          <a href="https://www.instagram.com/cinemanproductions" class="fc-link" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.linkedin.com/company/cinemanofficial/" class="fc-link" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="mailto:hello@cineman.in" class="fc-link">Email</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2024 CineMan Productions. All Rights Reserved.</p>
+      <p class="footer-craft">Crafted for the cinema.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
