@@ -274,63 +274,82 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 .menu-overlay {
   position: fixed; inset: 0;
   z-index: 9000;
-  background: rgba(5,4,3,0.97);
+  background: rgba(5,4,3,0.98);
   backdrop-filter: blur(12px);
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
   opacity: 0; pointer-events: none;
-  transition: opacity 0.5s var(--ease-cinema);
+  transition: opacity 0.45s var(--ease-cinema);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .menu-overlay.is-open { opacity: 1; pointer-events: all; }
+
 .menu-inner {
   width: 100%; max-width: var(--max-w);
-  padding: 0 var(--pad-x);
+  margin: 0 auto;
+  padding: var(--nav-h) var(--pad-x) 3rem;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 100%;
-  padding-top: 9rem;
-  padding-bottom: 4rem;
+  min-height: 100%;
 }
-.menu-nav { display: flex; flex-direction: column; gap: 0.25rem; }
+
+.menu-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: 1.5rem;
+}
+
 .menu-link {
-  display: flex; align-items: baseline; gap: 1.5rem;
-  padding: 0.7rem 0;
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 0.6rem 0;
   border-bottom: 1px solid var(--c-border);
   overflow: hidden;
   transition: border-color 0.3s;
 }
 .menu-link:hover { border-color: rgba(200,150,46,0.4); }
+
 .ml-idx {
-  font-size: 0.65rem; font-weight: 700;
+  font-size: 0.6rem; font-weight: 700;
   letter-spacing: 0.1em; color: var(--c-muted);
-  min-width: 2.5rem;
+  min-width: 2rem; flex-shrink: 0;
   transition: color 0.3s;
 }
 .menu-link:hover .ml-idx { color: var(--c-kodak); }
+
+/* Font scales so 8 items always fit — clamp keeps it large on big screens */
 .ml-text {
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 4.5vw, 4rem);
+  font-size: clamp(1.4rem, 3.5vw, 3rem);
   font-weight: 700; color: var(--c-cream);
   line-height: 1;
   display: block;
   transform: translateY(100%);
   transition: transform 0.5s var(--ease-out), color 0.3s;
 }
+/* Also clamp by viewport HEIGHT so items never overflow */
+@media (max-height: 700px) { .ml-text { font-size: clamp(1.2rem, 4vh, 2rem); } }
+@media (max-height: 560px) { .ml-text { font-size: 1.1rem; } .menu-link { padding: 0.4rem 0; } }
+
 .menu-overlay.is-open .ml-text { transform: translateY(0); }
-.menu-link:nth-child(1) .ml-text { transition-delay: 0.04s; }
-.menu-link:nth-child(2) .ml-text { transition-delay: 0.08s; }
-.menu-link:nth-child(3) .ml-text { transition-delay: 0.12s; }
-.menu-link:nth-child(4) .ml-text { transition-delay: 0.16s; }
-.menu-link:nth-child(5) .ml-text { transition-delay: 0.20s; }
-.menu-link:nth-child(6) .ml-text { transition-delay: 0.24s; }
-.menu-link:nth-child(7) .ml-text { transition-delay: 0.28s; }
-.menu-link:nth-child(8) .ml-text { transition-delay: 0.32s; }
+.menu-link:nth-child(1) .ml-text { transition-delay: 0.03s; }
+.menu-link:nth-child(2) .ml-text { transition-delay: 0.06s; }
+.menu-link:nth-child(3) .ml-text { transition-delay: 0.09s; }
+.menu-link:nth-child(4) .ml-text { transition-delay: 0.12s; }
+.menu-link:nth-child(5) .ml-text { transition-delay: 0.15s; }
+.menu-link:nth-child(6) .ml-text { transition-delay: 0.18s; }
+.menu-link:nth-child(7) .ml-text { transition-delay: 0.21s; }
+.menu-link:nth-child(8) .ml-text { transition-delay: 0.24s; }
 .menu-link:hover .ml-text { color: var(--c-projector); }
-.menu-meta { display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; }
+
+.menu-meta {
+  display: flex; gap: 2rem; align-items: center;
+  flex-wrap: wrap; padding-top: 2rem;
+}
 .menu-meta p, .menu-meta a {
-  font-size: 0.75rem; color: var(--c-muted); letter-spacing: 0.05em;
+  font-size: 0.72rem; color: var(--c-muted); letter-spacing: 0.05em;
 }
 .menu-meta a:hover { color: var(--c-kodak); }
 
@@ -1477,31 +1496,10 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
    Breakpoints: 860 tablet | 640 mobile | 420 small
 ═══════════════════════════════════════════════════════ */
 
-/* ── MENU: scrollable, smaller type so all 8 fit ── */
-.menu-inner {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-@media (max-width: 640px) {
-  .menu-inner {
-    padding-top: 6rem;
-    padding-bottom: 2.5rem;
-  }
-  .ml-text {
-    font-size: clamp(1.6rem, 7vw, 2.4rem);
-  }
-  .menu-link {
-    padding: 0.5rem 0;
-  }
-  .menu-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-}
+/* ── MENU: extra compact on small mobile ── */
 @media (max-width: 420px) {
-  .ml-text { font-size: 1.5rem; }
-  .menu-link { padding: 0.4rem 0; }
+  .menu-link { padding: 0.35rem 0; }
+  .menu-meta { flex-direction: column; align-items: flex-start; gap: 0.4rem; }
 }
 
 /* ── NAV: mobile centre-logo + burger only ── */
