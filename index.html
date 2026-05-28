@@ -29,10 +29,15 @@
       Slate ("CLICK TO ROLL"). That single gesture constructs + resumes the
       context (browser policy satisfied) and fires the clap→motor→hum chain.
       Nothing audible can happen before it.
-  (c) iOS HAPTICS FALLBACK — navigator.vibrate is absent on iOS Safari. We
-      feature-detect; when vibrate is unavailable (or returns false) we play a
-      tight transform "micro-jolt" (1–2px, transform-only) on the film stage in
-      lockstep with the exact audio transient, so the hit still reads as physical.
+  (c) CROSS-PLATFORM HAPTICS — each platform gets the strongest feedback it can.
+      • Android: real navigator.vibrate() motor buzz.
+      • iOS 17.4+: navigator.vibrate is absent, but toggling a native <input switch>
+        via a label click fires a genuine system haptic — we keep one hidden switch
+        and "tick" it inside the user gesture.
+      • Mac / desktop: no vibration hardware exists, so a tight transform "micro-jolt"
+        (a 4-step shudder on the film stage) IS the haptic, in lockstep with the audio.
+      Desktop Chrome's vibrate() is a silent no-op that still returns truthy, so we
+      gate the real buzz on a touch-device media query, never on that return value.
       Every haptic is paired with its sound for perceived realism.
   ════════════════════════════════════════════════════════════════
 -->
@@ -585,6 +590,19 @@ class AudioEngine{
     const n=this._noise(),bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1200;bp.Q.value=2;
     const g=this.ctx.createGain();this._env(g,t,.001,.05,.02);n.connect(bp);bp.connect(g);g.connect(this.master);n.start(t);n.stop(t+.026);
   }
+  // Universal tactile "tock" — the cross-platform confirmation paired with every haptic.
+  // Audio is the one cue that survives BOTH no-vibration-hardware (Mac/iOS) AND OS
+  // Reduce-Motion (which suppresses the visual kick). Respects the SYNC/MOS toggle.
+  cue(){ if(!this.audible)return; const t=this.t;
+    const o=this.ctx.createOscillator();o.type='triangle';
+    o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(300,t+.03);
+    const bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1500;bp.Q.value=.9;
+    const og=this.ctx.createGain();this._env(og,t,.001,.18,.04);
+    o.connect(bp);bp.connect(og);og.connect(this.master);o.start(t);o.stop(t+.055);
+    const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2800;
+    const ng=this.ctx.createGain();this._env(ng,t,.0005,.10,.012);
+    n.connect(hp);hp.connect(ng);ng.connect(this.master);n.start(t);n.stop(t+.02);
+  }
   wrap(){ if(!this.ctx)return; const t0=this.t; let dt=0,iv=.10,pk=.5;
     for(let i=0;i<14;i++){const t=t0+dt;
       const n=this._noise(),lp=this.ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;
@@ -603,20 +621,56 @@ const engine=new AudioEngine();
 
 /* ═══════════ 2. HAPTICS (+ iOS micro-jolt fallback) ═══════════ */
 const Haptics={
-  supported:(typeof navigator!=='undefined'&&'vibrate'in navigator),
-  // real device vibration only (returns true if the platform actually buzzed).
-  // NB: desktop Chrome has vibrate() but it's a silent no-op, so callers that
-  // need a *felt* response should pair this with a visible jolt.
-  buzz(pattern){ if(this.supported){ try{ return navigator.vibrate(pattern)!==false; }catch(e){} } return false; },
+  // A real vibration motor effectively only lives on phones/tablets. Desktop
+  // Chrome exposes navigator.vibrate but it's a SILENT NO-OP that still returns
+  // truthy — so its return value can't tell us if anything was felt. Gate the
+  // real buzz on a touch-device media query instead.
+  canVibrate:(typeof navigator!=='undefined' && 'vibrate' in navigator
+              && typeof matchMedia!=='undefined'
+              && matchMedia('(hover:none) and (pointer:coarse)').matches),
+  // iOS has NO Vibration API, but Safari 17.4+ fires a genuine system haptic when a
+  // native <input switch> is toggled via a label click. We keep one hidden switch and
+  // "tick" it. (iPadOS reports its platform as Mac, hence the maxTouchPoints probe.)
+  isIOS:(typeof navigator!=='undefined' &&
+         (/iP(hone|od|ad)/.test(navigator.userAgent) ||
+          (/Mac/.test(navigator.platform||'') && (navigator.maxTouchPoints||0)>1))),
+  _sw:null,
+  initIOS(){
+    if(!this.isIOS || this._sw || typeof document==='undefined' || !document.body) return;
+    const l=document.createElement('label');
+    l.setAttribute('aria-hidden','true');
+    // Keep it RENDERED at native size but off-screen — display:none OR clipping it
+    // to ~1px can stop iOS rendering it as a switch, which kills the haptic.
+    l.style.cssText='position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
+    const i=document.createElement('input');
+    i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1; i.setAttribute('aria-hidden','true');
+    l.appendChild(i); document.body.appendChild(l); this._sw=l;
+  },
+  iosTick(){ if(this._sw){ try{ this._sw.click(); return true; }catch(e){} } return false; },
+  buzz(pattern){ if(this.canVibrate){ try{ navigator.vibrate(pattern); return true; }catch(e){} } return false; },
+  _lastCue:0,
+  cueTick(){ const now=(typeof performance!=='undefined'?performance.now():Date.now());
+    if(now-this._lastCue<70) return; this._lastCue=now;   // debounce rapid hover/scroll
+    try{ engine.cue(); }catch(e){} },
   fire(pattern,joltAmp,el){
-    if(!this.buzz(pattern)) microJolt(joltAmp||1, el);   // substitute a physical-feeling kick
+    const buzzed=this.buzz(pattern);        // Android: real vibration motor
+    this.iosTick();                         // iOS 17.4+: native switch haptic (no-op elsewhere)
+    this.cueTick();                         // universal audio "tock" — survives Reduce Motion & no-buzz hardware
+    if(!buzzed) microJolt(joltAmp||1, el);  // desktop / iOS: the visible kick is the felt response
   }
 };
 function microJolt(amp,target){
   if(REDUCED) return;
-  const a=2*(amp||1), st=target||'#filmstage';
+  const a=3.5*(amp||1), st=target||'#filmstage';
   gsap.killTweensOf(st);
-  gsap.fromTo(st,{x:0,y:0},{keyframes:[{x:a,y:-a,duration:.03},{x:-a*.7,y:a*.6,duration:.03},{x:0,y:0,duration:.06}],ease:'none'});
+  // a 4-step shudder reads as a "buzz" far better than a single nudge — this is
+  // the sole felt response on desktop/iOS, so it has to be perceptible.
+  gsap.fromTo(st,{x:0,y:0},{keyframes:[
+    {x:a,y:-a,duration:.025},
+    {x:-a*.8,y:a*.7,duration:.025},
+    {x:a*.45,y:-a*.4,duration:.03},
+    {x:0,y:0,duration:.07}
+  ],ease:'none'});
 }
 /* The clapperboard physically recoils from the strike — the signature haptic
    moment. Always shown: it's what's on screen at clap-time (#filmstage is hidden
@@ -654,8 +708,10 @@ async function roll(){
   // CLAP — fire the physical hit IMMEDIATELY, inside the click gesture so device
   // vibration is permitted: a real buzz (mobile) + a guaranteed visible recoil of
   // the clapperboard (on desktop/iOS that kick IS the haptic).
-  Haptics.buzz([0,40,30,70]);
-  clapperKick();
+  Haptics.initIOS();              // ensure the iOS haptic switch exists (idempotent)
+  Haptics.buzz([0,40,30,70]);     // Android: real motor
+  Haptics.iosTick();              // iOS 17.4+: real system haptic, inside this tap gesture
+  clapperKick();                  // everyone: the visible clapperboard recoil
 
   const ready=await engine.init();           // (b) AudioContext born from this gesture
   // honour any persisted MOS choice from earlier in the session
@@ -688,6 +744,7 @@ async function roll(){
 }
 slate.addEventListener('click',roll);
 slate.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();roll();} });
+Haptics.initIOS();   // pre-create the iOS haptic switch so it's settled before the first tap
 
 /* ═══════════ 4. EXPERIENCE (post-roll) ═══════════ */
 function startExperience(){
