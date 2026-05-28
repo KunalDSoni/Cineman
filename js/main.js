@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════
    CINEMAN PRODUCTIONS — CINEMATIC THRILLER INTERACTION SYSTEM
-   Version 2.0 — Monks × A24 × Netflix Experience
+   Version 2.0 — Premium Cinematic Experience
    GSAP · Lenis · Film Grain · Blur-to-Focus · Word Illuminate
 ═══════════════════════════════════════════════════════════ */
 

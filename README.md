@@ -8,7 +8,7 @@ A world-class cinematic website for **CineMan Productions** — the Ahmedabad-ba
 
 ## Overview
 
-This is a fully hand-coded, production-ready website built with a **Monks × A24 × Apple** aesthetic philosophy. The design revolves around a premium **cinematic yellow × matte black** palette — inspired by Kodak film amber, tungsten lighting, and projector gold.
+This is a fully hand-coded, production-ready website built with a **premium, cinematic** aesthetic philosophy. The design revolves around a **cinematic yellow × matte black** palette — drawn from Kodak film amber, tungsten lighting, and projector gold.
 
 **Live experience:** Open `index.html` in any modern browser.
 
@@ -114,7 +114,7 @@ Founded in **2010** in Ahmedabad, Gujarat by **Abhishek Jain**, **Mikhil Musale*
 
 ## Copywriting Philosophy
 
-The website copy is written in the voice of **A24 × Nike × Apple × fashion-film storytelling**. Guiding principle: write like a director, not a marketer.
+The website copy is written in the voice of **cinematic, director-led storytelling**. Guiding principle: write like a director, not a marketer.
 
 **Never:** "We are passionate about creative solutions"  
 **Always:** "Cinema for brands that want to be remembered"
