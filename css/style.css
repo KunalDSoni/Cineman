@@ -351,14 +351,24 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   max-width: var(--max-w); margin: 0 auto;
   padding: 0 var(--pad-x); height: 100%;
   display: flex; align-items: center;
-  gap: 2.5rem;
+  position: relative;                 /* anchor for absolute centre group */
 }
 
-/* Logo */
+/* ── Centre group: absolutely centred in the nav bar ── */
+.nav-center-group {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center;
+  gap: 2.2rem;
+  pointer-events: none;               /* let clicks pass to children */
+}
+.nav-center-group > * { pointer-events: all; }
+
+/* Logo inside centre group */
 .nav-logo {
   display: flex; align-items: center;
-  flex-shrink: 0;
-  transition: opacity 0.3s;
+  flex-shrink: 0; transition: opacity 0.3s;
 }
 .nav-logo:hover { opacity: 0.85; }
 .nav-logo-img {
@@ -370,13 +380,12 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   filter: drop-shadow(0 0 18px rgba(200,150,46,0.4));
 }
 
-/* All 4 links — right of logo, grouped together */
+/* Links flanking the logo */
 .nav-links {
-  display: flex; align-items: center; gap: 2.2rem;
-  list-style: none;
-  flex-shrink: 0;
+  display: flex; align-items: center; gap: 2rem;
+  list-style: none; flex-shrink: 0;
 }
-@media (max-width: 860px) { .nav-links { display: none; } }
+@media (max-width: 860px) { .nav-center-group { display: none; } }
 
 .nav-link {
   font-size: 0.73rem; font-weight: 500;
@@ -394,7 +403,7 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 .nav-link:hover { color: var(--c-cream); }
 .nav-link:hover::after { width: 100%; }
 
-/* Spacer pushes CTA to far right */
+/* CTA + burger — always far right via margin-left: auto */
 .nav-end {
   margin-left: auto;
   display: flex; align-items: center; gap: 1.2rem;
@@ -420,9 +429,7 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 .nav-burger.is-open .burger-line:first-child { transform: translateY(3px) rotate(45deg); }
 .nav-burger.is-open .burger-line:last-child  { transform: translateY(-3px) rotate(-45deg); }
 
-@media (max-width: 860px) {
-  .nav-cta { display: none; }
-}
+@media (max-width: 860px) { .nav-cta { display: none; } }
 
 /* ─────────────────────────────────────────
    HERO — Cinematic Thriller

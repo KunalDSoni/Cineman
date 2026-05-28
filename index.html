@@ -95,20 +95,24 @@
   <nav class="nav" id="nav">
     <div class="nav-inner">
 
-      <!-- Logo — left anchor -->
-      <a href="index.html" class="nav-logo" aria-label="CineMan Productions">
-        <img src="assets/logo.svg" alt="CineMan Productions" class="nav-logo-img">
-      </a>
+      <!-- Centre group: left links + logo + right links — all absolutely centred -->
+      <div class="nav-center-group">
+        <ul class="nav-links" role="list">
+          <li><a href="#films" class="nav-link">Films</a></li>
+          <li><a href="#work"  class="nav-link">Work</a></li>
+        </ul>
 
-      <!-- All 4 links — immediately right of logo -->
-      <ul class="nav-links" role="list">
-        <li><a href="#films"     class="nav-link">Films</a></li>
-        <li><a href="#work"      class="nav-link">Work</a></li>
-        <li><a href="#studio"    class="nav-link">Studio</a></li>
-        <li><a href="#directors" class="nav-link">Directors</a></li>
-      </ul>
+        <a href="index.html" class="nav-logo" aria-label="CineMan Productions">
+          <img src="assets/logo.svg" alt="CineMan Productions" class="nav-logo-img">
+        </a>
 
-      <!-- CTA + burger — far right -->
+        <ul class="nav-links" role="list">
+          <li><a href="#studio"    class="nav-link">Studio</a></li>
+          <li><a href="#directors" class="nav-link">Directors</a></li>
+        </ul>
+      </div>
+
+      <!-- CTA + burger — always far right -->
       <div class="nav-end">
         <a href="#contact" class="nav-cta">Let's Create</a>
         <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
