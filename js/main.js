@@ -200,41 +200,40 @@ function initCinematicCanvas() {
 }
 
 /* ─────────────────────────────────────────
-   1c. YOUTUBE EMBED — show only if embedding works
-   Error 153 / 150 / 101 = embedding disabled → hide iframe, canvas shows
+   1c. YOUTUBE EMBED HANDLER
+   Show video after 3s load window.
+   Only hide permanently on confirmed embed errors (150/151/153).
 ───────────────────────────────────────── */
 function initYouTubeHandler() {
-  const wrap = $('#hero-video-wrap');
-  const iframe = $('#hero-video');
+  const wrap   = document.getElementById('hero-video-wrap');
+  const iframe = document.getElementById('hero-video');
   if (!wrap || !iframe) return;
 
-  // YouTube sends postMessage events
-  window.addEventListener('message', e => {
-    // Only handle YouTube messages
-    if (!e.origin.includes('youtube.com')) return;
+  let blocked = false;
 
+  // Detect confirmed embed-block errors via postMessage
+  window.addEventListener('message', e => {
+    if (!e.origin.includes('youtube.com')) return;
     try {
       const data = JSON.parse(e.data);
-
-      // YT player state 1 = playing → show video
-      if (data?.info?.playerState === 1) {
-        wrap.classList.add('is-ready');
-      }
-
-      // Errors 100,101,150,153 = can't embed → keep canvas, hide video wrap
-      const errorCodes = [100, 101, 150, 153];
-      if (data?.info?.errorCode && errorCodes.includes(data.info.errorCode)) {
+      // YouTube error codes that mean embedding is disabled
+      const errCode =
+        data?.info?.errorCode ||
+        (data?.event === 'onError' ? data?.info : null);
+      if (errCode && [100, 101, 150, 151, 153].includes(Number(errCode))) {
+        blocked = true;
         wrap.style.display = 'none';
       }
     } catch (_) {}
   });
 
-  // Fallback: if video hasn't shown after 5s, assume blocked
+  // Show the video after 3 seconds — enough time for YT to load & autoplay.
+  // If embedding was blocked, the postMessage above will have hidden it first.
   setTimeout(() => {
-    if (!wrap.classList.contains('is-ready')) {
-      wrap.style.display = 'none';
+    if (!blocked) {
+      wrap.classList.add('is-ready');
     }
-  }, 5000);
+  }, 3000);
 }
 
 /* ─────────────────────────────────────────
