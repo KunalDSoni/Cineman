@@ -646,6 +646,22 @@ const Haptics={
     i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1; i.setAttribute('aria-hidden','true');
     l.appendChild(i); document.body.appendChild(l); this._sw=l;
   },
+  // ROBUST iOS path: overlay a transparent, full-cover <label>+<input switch> on a real
+  // tap target so the user's ACTUAL finger tap toggles the switch. A *trusted* activation
+  // reliably fires the iOS haptic — a scripted .click() on a hidden control does not. The
+  // click still bubbles to the element's own handler (roll()/toggle), and roll() is guarded.
+  armTap(el){
+    if(!this.isIOS || !el || el.__hapt) return; el.__hapt=true;
+    const lab=document.createElement('label');
+    lab.setAttribute('aria-hidden','true');
+    lab.style.cssText='position:absolute;inset:0;display:block;margin:0;opacity:0;cursor:inherit;-webkit-tap-highlight-color:transparent;';
+    const i=document.createElement('input');
+    i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1; i.setAttribute('aria-hidden','true');
+    i.style.cssText='position:absolute;top:0;left:0;margin:0;opacity:0;';
+    lab.appendChild(i);
+    if(getComputedStyle(el).position==='static') el.style.position='relative';
+    el.appendChild(lab);
+  },
   iosTick(){ if(this._sw){ try{ this._sw.click(); return true; }catch(e){} } return false; },
   buzz(pattern){ if(this.canVibrate){ try{ navigator.vibrate(pattern); return true; }catch(e){} } return false; },
   _lastCue:0,
@@ -745,6 +761,7 @@ async function roll(){
 slate.addEventListener('click',roll);
 slate.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();roll();} });
 Haptics.initIOS();   // pre-create the iOS haptic switch so it's settled before the first tap
+Haptics.armTap(slate);   // real finger tap on the clapperboard fires a trusted iOS haptic
 
 /* ═══════════ 4. EXPERIENCE (post-roll) ═══════════ */
 function startExperience(){
@@ -845,6 +862,7 @@ snd.addEventListener('click',async ()=>{
   hit(()=>engine.lensClick(),[0,15],.8);
   if(!engine.muted && !engine.hum && !wrapped) engine.startHum();
 });
+Haptics.armTap(snd);   // real tap on the SYNC/MOS toggle also fires a trusted iOS haptic
 
 /* ═══════════ 9. MICRO-INTERACTIONS ═══════════ */
 // rack-focus cards (hover + keyboard focus)
