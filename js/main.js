@@ -910,6 +910,13 @@ function initSound() {
 
   let ctx = null, master = null, on = false, ticking = false;
 
+  // Subtle mobile haptic — only when the viewer has opted into immersion (sound on).
+  window.__cineHaptic = (ms) => {
+    try {
+      if (window.__cineSoundOn && navigator.vibrate && matchMedia('(pointer:coarse)').matches) navigator.vibrate(ms);
+    } catch (_) {}
+  };
+
   function build() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return false;
@@ -937,7 +944,17 @@ function initSound() {
     const dGain = ctx.createGain(); dGain.gain.value = 0.04;
     d1.connect(dGain); d2.connect(dGain); dGain.connect(lp); lp.connect(master);
 
-    [hum, lfo, hum2, d1, d2].forEach(o => o.start());
+    // Subsonic floor — felt more than heard; the chest-tension layer
+    const sub = ctx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 38;
+    const subGain = ctx.createGain(); subGain.gain.value = 0.07;
+    sub.connect(subGain); subGain.connect(master);
+
+    // Slow swell — the drone's lowpass opens and closes over ~20s (breathing tension)
+    const swell = ctx.createOscillator(); swell.type = 'sine'; swell.frequency.value = 0.05;
+    const swellGain = ctx.createGain(); swellGain.gain.value = 180;
+    swell.connect(swellGain); swellGain.connect(lp.frequency);
+
+    [hum, lfo, hum2, d1, d2, sub, swell].forEach(o => o.start());
     return true;
   }
 
@@ -961,6 +978,7 @@ function initSound() {
 
   function setOn(v) {
     on = v;
+    window.__cineSoundOn = on;
     if (on) {
       if (!ctx && !build()) return;
       if (ctx.state === 'suspended') ctx.resume();
@@ -1054,19 +1072,26 @@ function initHeroPullback() {
 ───────────────────────────────────────── */
 function initActFlashes() {
   if (REDUCED) return;
-  const flash = document.createElement('div');
-  flash.style.cssText = `
+  // A soft exposure dip on entering a new act — the eye adjusting on a cut.
+  // Radial so the frame edges darken briefly while the centre stays readable.
+  const cut = document.createElement('div');
+  cut.style.cssText = `
     position:fixed; inset:0; pointer-events:none; z-index:9990; opacity:0;
-    background:linear-gradient(180deg, rgba(228,180,74,0) 0%, rgba(228,180,74,0.09) 50%, rgba(228,180,74,0) 100%);
+    background:radial-gradient(ellipse 125% 125% at 50% 50%, rgba(5,4,3,0) 28%, rgba(5,4,3,0.6) 100%);
   `;
-  document.body.appendChild(flash);
+  document.body.appendChild(cut);
 
-  ['#films', '#cast', '#studio', '#directors', '#contact'].forEach(sel => {
+  ['#reel', '#films', '#studio', '#contact'].forEach(sel => {
     const el = $(sel);
     if (!el) return;
     ScrollTrigger.create({
-      trigger: el, start: 'top 72%',
-      onEnter: () => gsap.fromTo(flash, { opacity: 0.1 }, { opacity: 0, duration: 0.7, ease: 'power2.out' })
+      trigger: el, start: 'top 70%',
+      onEnter: () => {
+        gsap.timeline()
+          .to(cut, { opacity: 0.45, duration: 0.14, ease: 'power2.in' })
+          .to(cut, { opacity: 0, duration: 0.6, ease: 'power2.out' });
+        if (window.__cineHaptic) window.__cineHaptic(6);
+      }
     });
   });
 }
@@ -1099,6 +1124,76 @@ function initDust() {
 }
 
 /* ─────────────────────────────────────────
+   22. LIVING ATMOSPHERE ENGINE
+   One rAF loop → CSS variables. The site breathes,
+   reacts to scroll energy, deepens in stillness,
+   and re-lights itself act by act. A handheld
+   camera drifts across the projector plate so the
+   hero feels filmed, not rendered.
+───────────────────────────────────────── */
+function initLivingAtmosphere() {
+  const root = document.documentElement;
+  const heroCanvas = $('#hero-canvas');
+
+  // Reduced motion: a calm, static mood — no loop.
+  if (REDUCED) {
+    root.style.setProperty('--pulse', '0.4');
+    root.style.setProperty('--energy', '0');
+    root.style.setProperty('--vignette', '0.15');
+    root.style.setProperty('--grain-o', '0.05');
+    return;
+  }
+
+  let energy = 0;
+  let lastActivity = performance.now();
+  const markActive = () => { lastActivity = performance.now(); };
+  ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(ev =>
+    window.addEventListener(ev, markActive, { passive: true }));
+
+  const start = performance.now();
+
+  function frame(now) {
+    const t = (now - start) / 1000;
+
+    // Breathing pulse — two detuned sines for an organic ~6.5s breath.
+    const tt = t * (Math.PI * 2 / 6.5);
+    const pulse = clamp(0.5 + 0.32 * Math.sin(tt) + 0.12 * Math.sin(tt * 2.7 + 1.3), 0, 1);
+
+    // Scroll energy — fed by Lenis velocity, fast attack / slow decay to stillness.
+    const vel = (lenis && typeof lenis.velocity === 'number') ? Math.abs(lenis.velocity) : 0;
+    const target = clamp(vel / 38, 0, 1);
+    energy += (target - energy) * (target > energy ? 0.25 : 0.06);
+
+    // Idle deepening — after ~5s of stillness, the room darkens.
+    const idleDeep = clamp(((now - lastActivity) / 1000 - 5) / 4, 0, 1);
+
+    // Exposure by scroll — warm hero, tense middle, glow finale.
+    const max = (document.documentElement.scrollHeight - window.innerHeight) || 1;
+    const p = clamp(window.scrollY / max, 0, 1);
+    const exposure = 1 - 0.5 * Math.sin(p * Math.PI);
+
+    const vignette = clamp((1 - exposure) * 0.7 + energy * 0.35 + idleDeep * 0.6, 0, 1);
+    const grainO = 0.045 + energy * 0.07 + pulse * 0.012 + idleDeep * 0.02;
+
+    root.style.setProperty('--pulse', pulse.toFixed(3));
+    root.style.setProperty('--energy', energy.toFixed(3));
+    root.style.setProperty('--vignette', vignette.toFixed(3));
+    root.style.setProperty('--grain-o', grainO.toFixed(3));
+
+    // Camera presence — handheld micro-drift on the projector plate.
+    if (heroCanvas) {
+      const x = Math.sin(t * 0.9) * 4 + Math.sin(t * 0.37) * 2.5;
+      const y = Math.cos(t * 0.7) * 3 + Math.sin(t * 0.23) * 2;
+      const r = Math.sin(t * 0.5) * 0.12;
+      heroCanvas.style.transform = `scale(1.06) translate3d(${x}px, ${y}px, 0) rotate(${r}deg)`;
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ─────────────────────────────────────────
    MAIN INIT
 ───────────────────────────────────────── */
 function init() {
@@ -1115,6 +1210,7 @@ function init() {
     initMenu();
     initSound();             // opt-in cinematic ambience
     initDust();              // atmospheric dust in dark scenes
+    initLivingAtmosphere();  // ░ breathing engine: pulse · energy · idle · exposure · camera
     initScrollAnimations();
     initManifestoIlluminate();
     initReelSequence();      // ░ signature "Enter the Frame" moment

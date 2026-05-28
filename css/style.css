@@ -66,7 +66,7 @@ button { cursor:none; background:none; border:none; font-family:inherit; }
   height: 100%;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.055;
+  opacity: var(--grain-o, 0.055);   /* engine-driven: reacts to motion + breath */
   mix-blend-mode: overlay;
 }
 
@@ -1648,29 +1648,47 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   z-index: 9991;
   pointer-events: none;
 }
-/* Edge vignette — ties every section into one lens */
+/* Edge vignette — ties every section into one lens.
+   Deepens with tension: low exposure (mid-film), scroll energy, and idle. */
 .atmos-vignette {
   position: absolute; inset: 0;
   box-shadow:
-    inset 0 0 180px 40px rgba(0,0,0,0.55),
+    inset 0 0 calc(170px + var(--vignette, 0) * 150px) 40px rgba(0,0,0, calc(0.5 + var(--vignette, 0) * 0.34)),
     inset 0 0 60px 0 rgba(0,0,0,0.35);
+  transition: box-shadow 0.4s linear;
 }
-/* Drifting amber haze — adds depth over dark scenes (screen blend) */
+/* Drifting amber haze — depth over dark scenes; opacity breathes with the engine */
 .atmos-haze {
   position: absolute; inset: -20%;
   mix-blend-mode: screen;
-  opacity: 0.55;
+  opacity: calc(0.40 + var(--pulse, 0) * 0.18 + var(--energy, 0) * 0.30);
   background:
     radial-gradient(ellipse 40% 30% at 20% 18%, rgba(200,150,46,0.10), transparent 60%),
     radial-gradient(ellipse 35% 40% at 85% 80%, rgba(120,80,20,0.10), transparent 60%);
   animation: atmos-drift 28s ease-in-out infinite alternate;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 @keyframes atmos-drift {
   from { transform: translate3d(-2%, -1%, 0) scale(1.02); }
   to   { transform: translate3d(3%,  2%, 0) scale(1.08); }
 }
-/* A single slow light beam sweeping the whole page */
+/* Foreground volumetric fog — adds physical depth, thickens with motion */
+.atmos-fog {
+  position: absolute; inset: -20%;
+  mix-blend-mode: screen;
+  filter: blur(50px);
+  opacity: calc(0.45 + var(--energy, 0) * 0.40);
+  background:
+    radial-gradient(ellipse 45% 35% at 62% 42%, rgba(200,150,46,0.06), transparent 62%),
+    radial-gradient(ellipse 38% 30% at 28% 70%, rgba(150,100,30,0.05), transparent 60%);
+  animation: atmos-fog-drift 38s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+@keyframes atmos-fog-drift {
+  from { transform: translate3d(-3%, 2%, 0) scale(1.04); }
+  to   { transform: translate3d(4%, -3%, 0) scale(1.12); }
+}
+/* A single slow light beam sweeping the whole page; brightness breathes */
 .atmos-beam {
   position: absolute; top: -30%; left: 50%;
   width: 60vw; height: 160vh;
@@ -1679,13 +1697,13 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   background: linear-gradient(180deg,
     rgba(228,180,74,0.05) 0%, rgba(200,150,46,0.02) 40%, transparent 75%);
   mix-blend-mode: screen;
-  opacity: 0.5;
+  opacity: calc(0.32 + var(--pulse, 0) * 0.30);
   filter: blur(20px);
   animation: atmos-sweep 22s ease-in-out infinite alternate;
 }
 @keyframes atmos-sweep {
-  from { transform: translateX(-60%) rotate(10deg); opacity: 0.35; }
-  to   { transform: translateX(-40%) rotate(18deg); opacity: 0.6; }
+  from { transform: translateX(-60%) rotate(10deg); }
+  to   { transform: translateX(-40%) rotate(18deg); }
 }
 
 /* Reusable floating-dust field for dark scenes */
@@ -1801,7 +1819,13 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   will-change: transform, opacity;
   padding: 0 var(--pad-x);
 }
-.reel-word em { color: var(--c-projector); font-style: italic; }
+.reel-word em {
+  color: var(--c-projector); font-style: italic;
+  /* breathing projector glow — the word feels lit, not printed */
+  text-shadow:
+    0 0 calc(24px + var(--pulse, 0) * 46px) rgba(228,180,74, calc(0.16 + var(--pulse, 0) * 0.26)),
+    0 6px 50px rgba(0,0,0,0.5);
+}
 
 /* Scene marker — bottom corner like a timecode */
 .reel-timecode {
@@ -1875,10 +1899,10 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
    REDUCED MOTION — respect the viewer
 ───────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .atmos-haze, .atmos-beam, .dust-field span,
+  .atmos-haze, .atmos-beam, .atmos-fog, .dust-field span,
   .marquee-track, .hero-lens-flare, .film-award-glow,
   .sound-toggle.is-on .sound-eq span, .sc-thumb { animation: none !important; }
-  .atmos-haze, .atmos-beam { opacity: 0.3; }
+  .atmos-haze, .atmos-beam, .atmos-fog { opacity: 0.3 !important; }
   .reel { height: auto; }
   .reel-stage { height: auto; min-height: 80vh; padding: 8rem 0; }
   .reel-frame { width: 70vw; }
