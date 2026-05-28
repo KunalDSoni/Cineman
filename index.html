@@ -94,22 +94,31 @@
   ══════════════════════════════════════════ -->
   <nav class="nav" id="nav">
     <div class="nav-inner">
-      <a href="index.html" class="nav-logo" aria-label="CineMan Productions Home">
+
+      <!-- Left links -->
+      <ul class="nav-links nav-links--left" role="list">
+        <li><a href="#films" class="nav-link">Films</a></li>
+        <li><a href="#work"  class="nav-link">Work</a></li>
+      </ul>
+
+      <!-- Centre logo -->
+      <a href="index.html" class="nav-logo nav-logo--center" aria-label="CineMan Productions">
         <img src="assets/logo.svg" alt="CineMan Productions" class="nav-logo-img">
       </a>
-      <ul class="nav-links" role="list">
-        <li><a href="#films"     class="nav-link">Films</a></li>
-        <li><a href="#work"      class="nav-link">Work</a></li>
-        <li><a href="#studio"    class="nav-link">Studio</a></li>
-        <li><a href="#directors" class="nav-link">Directors</a></li>
-      </ul>
-      <div class="nav-end">
+
+      <!-- Right: links + CTA + burger -->
+      <div class="nav-right">
+        <ul class="nav-links nav-links--right" role="list">
+          <li><a href="#studio"    class="nav-link">Studio</a></li>
+          <li><a href="#directors" class="nav-link">Directors</a></li>
+        </ul>
         <a href="#contact" class="nav-cta">Let's Create</a>
         <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false">
           <span class="burger-line"></span>
           <span class="burger-line"></span>
         </button>
       </div>
+
     </div>
   </nav>
 

@@ -350,21 +350,27 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 .nav-inner {
   max-width: var(--max-w); margin: 0 auto;
   padding: 0 var(--pad-x); height: 100%;
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  position: relative;
 }
-.nav-logo { display: flex; align-items: center; z-index: 1; }
-.nav-logo-img { height: 38px; width: auto; }
+
+/* Left links */
 .nav-links {
   display: flex; gap: 2.5rem;
   list-style: none; align-items: center;
+  flex: 1;
 }
+.nav-links--left { justify-content: flex-start; }
+.nav-links--right { justify-content: flex-end; }
 @media (max-width: 768px) { .nav-links { display: none; } }
+
 .nav-link {
   font-size: 0.75rem; font-weight: 500;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--c-mid);
   transition: color 0.3s;
-  position: relative;
+  position: relative; white-space: nowrap;
 }
 .nav-link::after {
   content: ''; position: absolute;
@@ -374,13 +380,39 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 }
 .nav-link:hover { color: var(--c-cream); }
 .nav-link:hover::after { width: 100%; }
-.nav-end { display: flex; align-items: center; gap: 1.5rem; }
+
+/* Centre logo — absolutely centred so it doesn't shift with link count */
+.nav-logo--center {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+.nav-logo--center:hover { opacity: 0.85; }
+.nav-logo-img {
+  height: 42px; width: auto;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(200,150,46,0.15));
+  transition: filter 0.4s;
+}
+.nav-logo--center:hover .nav-logo-img {
+  filter: drop-shadow(0 0 16px rgba(200,150,46,0.35));
+}
+
+/* Right side */
+.nav-right {
+  display: flex; align-items: center; gap: 1.5rem;
+  flex: 1; justify-content: flex-end;
+}
 .nav-cta {
   font-size: 0.7rem; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
   color: var(--c-black); background: var(--c-kodak);
   padding: 0.55rem 1.3rem; border-radius: 2px;
   transition: background 0.3s, transform 0.2s;
+  white-space: nowrap;
 }
 .nav-cta:hover { background: var(--c-projector); transform: translateY(-1px); }
 .nav-burger {
@@ -394,6 +426,14 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
 }
 .nav-burger.is-open .burger-line:first-child { transform: translateY(3px) rotate(45deg); }
 .nav-burger.is-open .burger-line:last-child  { transform: translateY(-3px) rotate(-45deg); }
+
+/* Mobile: hide links, keep centered logo + burger */
+@media (max-width: 768px) {
+  .nav-links--left,
+  .nav-links--right { display: none; }
+  .nav-cta { display: none; }
+  .nav-logo--center { position: absolute; }
+}
 
 /* ─────────────────────────────────────────
    HERO — Cinematic Thriller
