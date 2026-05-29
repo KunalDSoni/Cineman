@@ -165,6 +165,11 @@ img{max-width:100%;display:block}
   top:0;will-change:transform;box-shadow:0 0 12px rgba(228,180,74,.4)}
 .filmstrip .pct{position:absolute;bottom:6px;left:50%;transform:translateX(-50%) rotate(180deg);writing-mode:vertical-rl;
   font-size:8px;letter-spacing:.2em;color:var(--gold);font-weight:600}
+/* light bleeding inward from the film gate — pulsed by sprocketPulse(), scaled by scene tier.
+   This is the loud, can't-miss-it scroll cue, especially on iOS (which can't buzz mid-scroll). */
+#sprk{position:fixed;top:0;left:0;width:34vw;max-width:340px;height:100vh;z-index:84;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,rgba(228,180,74,.6),rgba(228,180,74,.14) 38%,transparent 72%);
+  mix-blend-mode:screen;will-change:opacity}
 
 /* ───────── SOUND TOGGLE (SYNC / MOS) ───────── */
 .sndbtn{position:fixed;bottom:calc(var(--bar) + 14px);right:16px;z-index:210;
@@ -346,6 +351,8 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
   <div class="frame" id="fsFrame"></div>
   <div class="pct" id="fsPct">00%</div>
 </div>
+<!-- sprocket light-bleed: pulses from the gate edge on every scroll click (the felt scroll cue on iOS) -->
+<div id="sprk" aria-hidden="true"></div>
 
 <!-- sound toggle -->
 <button class="sndbtn mos" id="snd" aria-pressed="false" aria-label="Sound is off. Press to enable sync sound.">
@@ -396,7 +403,7 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
 
 <main>
   <!-- SCENE 01 — HERO -->
-  <section class="hero" data-scene="01" data-name="THE OPEN">
+  <section class="hero" data-scene="01" data-name="THE OPEN" data-haptic="high">
     <div class="hero-beam" aria-hidden="true"></div>
     <h1 aria-label="Every frame a feeling">
       <span class="ln"><span>EVERY</span></span>
@@ -411,13 +418,13 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
   </section>
 
   <!-- SCENE 02 — STATEMENT -->
-  <section data-scene="02" data-name="THE FRAME">
+  <section data-scene="02" data-name="THE FRAME" data-haptic="low">
     <div class="scene-tag">Scene 02 — The Frame</div>
     <p class="statement">We compose for the <em>cut</em> that lives in memory — long after the lights come up.</p>
   </section>
 
   <!-- SCENE 03 — WORKS -->
-  <section id="works" data-scene="03" data-name="SELECTED WORKS">
+  <section id="works" data-scene="03" data-name="SELECTED WORKS" data-haptic="high">
     <div class="scene-tag">Scene 03 — Selected Works</div>
 
     <!-- NOW SHOWING — feature reel (links to the real case study) -->
@@ -450,7 +457,7 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
   </section>
 
   <!-- SCENE 04 — CRAFT -->
-  <section id="craft" data-scene="04" data-name="THE CRAFT">
+  <section id="craft" data-scene="04" data-name="THE CRAFT" data-haptic="mid">
     <div class="scene-tag">Scene 04 — The Craft</div>
     <p class="statement" style="max-width:22ch">Built frame by frame, <em>felt</em> all at once.</p>
     <div class="crafts">
@@ -462,7 +469,7 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
   </section>
 
   <!-- SCENE 05 — DIRECTION -->
-  <section id="direction" data-scene="05" data-name="DIRECTION &amp; ENSEMBLE">
+  <section id="direction" data-scene="05" data-name="DIRECTION &amp; ENSEMBLE" data-haptic="mid">
     <div class="scene-tag">Scene 05 — Direction &amp; Ensemble</div>
     <div class="grid">
       <article class="card" tabindex="0" aria-label="Abhishek Jain — Founder and Director">
@@ -484,7 +491,7 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
   </section>
 
   <!-- WRAP -->
-  <section id="wrap" class="wrap-sec" data-scene="06" data-name="THAT'S A WRAP">
+  <section id="wrap" class="wrap-sec" data-scene="06" data-name="THAT'S A WRAP" data-haptic="high">
     <div class="tail">
       THAT'S A WRAP.
       <span class="small">CINEMAN PRODUCTIONS · EST. 2010</span>
@@ -593,14 +600,16 @@ class AudioEngine{
   // Universal tactile "tock" — the cross-platform confirmation paired with every haptic.
   // Audio is the one cue that survives BOTH no-vibration-hardware (Mac/iOS) AND OS
   // Reduce-Motion (which suppresses the visual kick). Respects the SYNC/MOS toggle.
-  cue(){ if(!this.audible)return; const t=this.t;
+  // g = intensity weight (.6 light → 1.7 heavy); lowHz = how deep the tock drops (deeper = bigger).
+  // Lets ONE sound carry High/Mid/Low haptic tiers on devices that can't vary a buzz (iOS/desktop).
+  cue(g=1,lowHz=300){ if(!this.audible)return; const t=this.t;
     const o=this.ctx.createOscillator();o.type='triangle';
-    o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(300,t+.03);
+    o.frequency.setValueAtTime(900,t);o.frequency.exponentialRampToValueAtTime(lowHz,t+.03+.012*(g-1));
     const bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1500;bp.Q.value=.9;
-    const og=this.ctx.createGain();this._env(og,t,.001,.18,.04);
-    o.connect(bp);bp.connect(og);og.connect(this.master);o.start(t);o.stop(t+.055);
+    const og=this.ctx.createGain();this._env(og,t,.001,.18*g,.04+.02*(g-1));
+    o.connect(bp);bp.connect(og);og.connect(this.master);o.start(t);o.stop(t+.07);
     const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2800;
-    const ng=this.ctx.createGain();this._env(ng,t,.0005,.10,.012);
+    const ng=this.ctx.createGain();this._env(ng,t,.0005,.10*g,.012);
     n.connect(hp);hp.connect(ng);ng.connect(this.master);n.start(t);n.stop(t+.02);
   }
   wrap(){ if(!this.ctx)return; const t0=this.t; let dt=0,iv=.10,pk=.5;
@@ -664,13 +673,30 @@ const Haptics={
   },
   iosTick(){ if(this._sw){ try{ this._sw.click(); return true; }catch(e){} } return false; },
   buzz(pattern){ if(this.canVibrate){ try{ navigator.vibrate(pattern); return true; }catch(e){} } return false; },
-  // Android only: a real micro-buzz that DOES work mid-scroll (sticky activation persists
-  // after the first tap). iOS can't buzz on scroll — it needs a tap gesture — so this no-ops there.
-  scrollBuzz(){ if(this.canVibrate){ try{ navigator.vibrate(7); }catch(e){} } },
   _lastCue:0,
-  cueTick(){ const now=(typeof performance!=='undefined'?performance.now():Date.now());
+  cueTick(g,low){ const now=(typeof performance!=='undefined'?performance.now():Date.now());
     if(now-this._lastCue<70) return; this._lastCue=now;   // debounce rapid hover/scroll
-    try{ engine.cue(); }catch(e){} },
+    try{ engine.cue(g,low); }catch(e){} },
+  // ── THE INTENSITY SCORE: Low (a quiet beat) · Mid · High (a punch). ──
+  // Each tier scales the THREE channels we can actually control everywhere:
+  //   buzz   — Android vibration motor (real strength via pattern length/gaps)
+  //   cue    — audio weight + depth (heard on every device that has sound on)
+  //   jolt   — the visible shudder (the felt response on iOS/desktop, which can't buzz)
+  // iOS exposes only ONE fixed system haptic (no strength control), so on iPhone a tier is
+  // mostly *heard* + *seen* — and a real buzz only on a trusted tap (clapperboard/buttons/toggle).
+  LEVELS:{
+    low : {buzz:[0,16],              cueGain:.62, cueLow:430, jolt:.7, flash:.55},
+    mid : {buzz:[0,34,26,50],        cueGain:1.0, cueLow:300, jolt:1.4, flash:1.0},
+    high: {buzz:[0,60,34,86,30,120], cueGain:1.7, cueLow:175, jolt:2.3, flash:1.85}
+  },
+  tier(level,el,opts){
+    const L=this.LEVELS[level]||this.LEVELS.mid;
+    const buzzed=this.buzz(L.buzz);                 // Android: stronger motor pattern per tier
+    this.iosTick();                                 // iOS: one system haptic (trusted tap only)
+    if(!opts || opts.cue!==false) this.cueTick(L.cueGain,L.cueLow);  // audio weight = intensity
+    if(!buzzed) microJolt(L.jolt,el);               // iOS/desktop: visible kick = intensity
+    return L;
+  },
   fire(pattern,joltAmp,el){
     const buzzed=this.buzz(pattern);        // Android: real vibration motor
     this.iosTick();                         // iOS 17.4+: native switch haptic (no-op elsewhere)
@@ -728,7 +754,7 @@ async function roll(){
   // vibration is permitted: a real buzz (mobile) + a guaranteed visible recoil of
   // the clapperboard (on desktop/iOS that kick IS the haptic).
   Haptics.initIOS();              // ensure the iOS haptic switch exists (idempotent)
-  Haptics.buzz([0,40,30,70]);     // Android: real motor
+  Haptics.buzz(Haptics.LEVELS.high.buzz); // Android: the HIGH-point motor pattern (the clap is the peak)
   Haptics.iosTick();              // iOS 17.4+: real system haptic, inside this tap gesture
   clapperKick();                  // everyone: the visible clapperboard recoil
 
@@ -786,7 +812,8 @@ function startExperience(){
 
 /* ═══════════ 5. THE REEL — velocity-scaled ticks + filmstrip ═══════════ */
 let reelVel=0, lastScrollUpdate=0, lastSprocketY=0;
-const SPROCKET_STEP=96;   // px of scroll between sprocket "clicks"
+let scrollLevel='high';   // current scene's intensity tier — set by setupSceneCuts; scales every sprocket
+const SPROCKET_STEP=84;   // px of scroll between sprocket "clicks"
 function onReelScroll(e){
   // throttle to ~60ms; attack the reel rate from |velocity|
   const now=performance.now();
@@ -801,16 +828,26 @@ function onReelScroll(e){
   const y=(typeof e.scroll==='number')?e.scroll:(window.scrollY||0);
   if(Math.abs(y-lastSprocketY)>=SPROCKET_STEP){ lastSprocketY=y; sprocketPulse(); }
 }
-const fsFill=$('#fsFill'),fsFrame=$('#fsFrame'),fsPct=$('#fsPct');
+const fsFill=$('#fsFill'),fsFrame=$('#fsFrame'),fsPct=$('#fsPct'),sprk=$('#sprk');
 function reelDecay(){ reelVel*=0.93; engine.setReelRate(reelVel); requestAnimationFrame(reelDecay); }
-// fired once per sprocket of scroll: real buzz (Android) + a gold gate-flash on the rail.
+// Fired once per sprocket of scroll. Strength tracks the CURRENT scene's tier (scrollLevel):
+// high-point scenes punch, low-point scenes whisper — so scrolling itself has a felt score.
+// iOS can't buzz mid-scroll (no tap gesture), so on iPhone the LIGHT BLEED + rail glow + fill
+// brighten ARE the effect — much bigger than the old hairline marker flash.
 function sprocketPulse(){
-  Haptics.scrollBuzz();                 // Android: felt ratchet; iOS/desktop: silent (platform)
+  const L=Haptics.LEVELS[scrollLevel]||Haptics.LEVELS.low;
+  // Android only: a SHORT ratchet tick, scaled by tier (iOS/desktop: silent — platform).
+  Haptics.buzz(scrollLevel==='high'?[0,11]:scrollLevel==='mid'?[0,7]:[0,4]);
   if(REDUCED) return;
-  // opacity + glow only — never touches transform, so it won't fight fsFrame's translateY.
+  const a=L.flash;
+  // opacity + glow + edge-bleed only — never touches transform, so it won't fight fsFrame's translateY.
   gsap.killTweensOf(fsFrame);
-  gsap.fromTo(fsFrame,{opacity:.55,boxShadow:'0 0 0px rgba(200,150,46,0)'},
-    {opacity:1,boxShadow:'0 0 12px rgba(200,150,46,.85)',duration:.07,yoyo:true,repeat:1,ease:'power2.out'});
+  gsap.fromTo(fsFrame,{opacity:.55,boxShadow:'0 0 0px rgba(228,180,74,0)'},
+    {opacity:1,boxShadow:'0 0 '+(8+16*a)+'px rgba(228,180,74,'+(.45+.45*a)+')',duration:.07,yoyo:true,repeat:1,ease:'power2.out'});
+  gsap.killTweensOf(fsFill);
+  gsap.fromTo(fsFill,{opacity:.16},{opacity:Math.min(.55,.16+.32*a),duration:.08,yoyo:true,repeat:1,ease:'power2.out'});
+  if(sprk){ gsap.killTweensOf(sprk);
+    gsap.fromTo(sprk,{opacity:0},{opacity:Math.min(.9,.26+.44*a),duration:.06,yoyo:true,repeat:1,ease:'power2.out'}); }
 }
 let tickTimer=null, wrapped=false;
 function startTicks(){
@@ -826,11 +863,12 @@ function startTicks(){
 /* ═══════════ 6. SCENE CUTS ═══════════ */
 const cut=$('#cut'),leak=$('#leak'),cutSc=$('#cutSc'),cutNm=$('#cutNm');
 let cutBusy=false,lastCut=0;
-function doCut(sc,nm){
+function doCut(sc,nm,level){
   const now=performance.now();
   if(cutBusy || now-lastCut<700) return; lastCut=now; cutBusy=true;
   cutSc.textContent=sc; cutNm.textContent=nm;
-  hit(()=>engine.clap(),[0,32],1.2);   // a clap on every cut, paired with haptic
+  engine.clap();                              // the cut's sound (the audio for the beat)
+  Haptics.tier(level||'mid',null,{cue:false});// buzz + visible kick at THIS scene's intensity
   const tl=gsap.timeline({onComplete:()=>cutBusy=false});
   if(REDUCED){
     tl.set(cut,{opacity:1}).to(cut,{opacity:0,duration:.4,delay:.25});
@@ -845,10 +883,13 @@ function doCut(sc,nm){
 }
 function setupSceneCuts(){
   $$('section[data-scene]').forEach(sec=>{
-    if(sec.id==='wrap' || sec.classList.contains('hero')) return; // hero is revealed by the intro; wrap self-treats
+    const lvl=sec.dataset.haptic||'mid';
+    const skip=(sec.id==='wrap' || sec.classList.contains('hero')); // hero revealed by intro; wrap self-treats
+    // EVERY scene sets the live scroll intensity (incl. hero/wrap) so sprocketPulse tracks the
+    // "score"; only the middle scenes also fire a cut beat.
     ScrollTrigger.create({trigger:sec,start:'top 58%',
-      onEnter:()=>doCut(sec.dataset.scene,sec.dataset.name),
-      onEnterBack:()=>doCut(sec.dataset.scene,sec.dataset.name)});
+      onEnter:()=>{ scrollLevel=lvl; if(!skip) doCut(sec.dataset.scene,sec.dataset.name,lvl); },
+      onEnterBack:()=>{ scrollLevel=lvl; if(!skip) doCut(sec.dataset.scene,sec.dataset.name,lvl); }});
   });
 }
 
@@ -875,7 +916,7 @@ snd.addEventListener('click',async ()=>{
   const on=engine.muted; engine.setMuted(!on);
   setToggle(!engine.muted);
   sessionStorage.setItem(SS_KEY, engine.muted?'mos':'sync');
-  hit(()=>engine.lensClick(),[0,15],.8);
+  engine.lensClick(); Haptics.tier('low',snd,{cue:false});  // toggle = the LOW-point haptic
   if(!engine.muted && !engine.hum && !wrapped) engine.startHum();
 });
 Haptics.armTap(snd);   // real tap on the SYNC/MOS toggle also fires a trusted iOS haptic
@@ -896,11 +937,12 @@ $$('.card').forEach(card=>{
 $$('.btn').forEach(btn=>{
   const ir=document.createElement('span'); ir.className='ir'; btn.appendChild(ir);
   btn.addEventListener('click',e=>{
-    hit(()=>engine.shutter(),[0,18],1);
+    engine.shutter(); Haptics.tier('mid',btn,{cue:false});  // buttons = the MID-point haptic
     const r=btn.getBoundingClientRect();
     gsap.set(ir,{left:(e.clientX-r.left)+'px',top:(e.clientY-r.top)+'px',scale:0,opacity:.6});
     gsap.to(ir,{scale:18,opacity:0,duration:.6,ease:'power2.out'});
   });
+  Haptics.armTap(btn);   // iOS: real finger tap on a CTA fires a trusted system haptic
   if(!REDUCED && !COARSE){
     btn.addEventListener('mousemove',e=>{const r=btn.getBoundingClientRect();
       gsap.to(btn,{x:(e.clientX-r.left-r.width/2)*.3,y:(e.clientY-r.top-r.height/2)*.4,duration:.4,ease:'power2.out'});});
