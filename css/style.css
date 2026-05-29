@@ -1909,3 +1909,44 @@ body.cursor-active .cursor-dot { transform: translate(-50%,-50%) scale(0.4); }
   .reel-word { position: static; opacity: 1; margin-top: 2rem; }
   .reel-bar { display: none; }
 }
+
+/* ═════════════════════════════════════════════════════════
+   WEBGL CINEMATOGRAPHY LAYER
+   A volumetric atmosphere rendered in Three.js, screen-blended
+   over the whole site. Fades in once a real frame is on screen
+   (html.webgl-on). The CSS atmosphere below stays as the floor
+   for no-WebGL / reduced-motion, dialed back when WebGL is live.
+═════════════════════════════════════════════════════════ */
+#cine-webgl {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 9992;                 /* above .atmosphere, below scroll-progress */
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+html.webgl-on #cine-webgl { opacity: 1; }
+
+/* Avoid doubling brightness — let WebGL carry the depth once it's live. */
+html.webgl-on .atmos-haze {
+  opacity: calc((0.40 + var(--pulse, 0) * 0.18 + var(--energy, 0) * 0.30) * 0.62);
+}
+html.webgl-on .atmos-fog {
+  opacity: calc((0.45 + var(--energy, 0) * 0.40) * 0.58);
+}
+
+/* ─────────────────────────────────────────
+   FILM-GRADE TITLE — halation bloom + a whisper
+   of anamorphic chromatic fringe on the hero.
+   Static (no repaint cost); reads as glass + light.
+───────────────────────────────────────── */
+.hero-title {
+  filter:
+    drop-shadow(0.7px 0 0 rgba(255, 40, 40, 0.045))
+    drop-shadow(-0.7px 0 0 rgba(40, 150, 255, 0.045))
+    drop-shadow(0 0 30px rgba(200, 150, 46, 0.10));
+}
+@media (prefers-reduced-motion: reduce) {
+  html.webgl-on #cine-webgl { opacity: 0.5; }
+}

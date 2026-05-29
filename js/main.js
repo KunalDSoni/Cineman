@@ -1141,14 +1141,20 @@ function initLivingAtmosphere() {
     root.style.setProperty('--energy', '0');
     root.style.setProperty('--vignette', '0.15');
     root.style.setProperty('--grain-o', '0.05');
+    window.__cine = { energy: 0, pulse: 0.4, exposure: 0.78, scroll: 0, vignette: 0.15 };
     return;
   }
 
   let energy = 0;
   let lastActivity = performance.now();
+  let mx = 0, my = 0, smx = 0, smy = 0;
   const markActive = () => { lastActivity = performance.now(); };
   ['pointermove', 'pointerdown', 'wheel', 'keydown', 'touchstart'].forEach(ev =>
     window.addEventListener(ev, markActive, { passive: true }));
+  window.addEventListener('pointermove', e => {
+    mx = (e.clientX / window.innerWidth)  * 2 - 1;
+    my = (e.clientY / window.innerHeight) * 2 - 1;
+  }, { passive: true });
 
   const start = performance.now();
 
@@ -1180,11 +1186,17 @@ function initLivingAtmosphere() {
     root.style.setProperty('--vignette', vignette.toFixed(3));
     root.style.setProperty('--grain-o', grainO.toFixed(3));
 
-    // Camera presence — handheld micro-drift on the projector plate.
+    // Share cinematic state with the WebGL cinematography engine.
+    window.__cine = { energy, pulse, exposure, scroll: p, vignette };
+
+    // Camera presence — handheld micro-drift + a restrained reframe toward
+    // the cursor (rack-the-frame, never obvious) on the projector plate.
     if (heroCanvas) {
-      const x = Math.sin(t * 0.9) * 4 + Math.sin(t * 0.37) * 2.5;
-      const y = Math.cos(t * 0.7) * 3 + Math.sin(t * 0.23) * 2;
-      const r = Math.sin(t * 0.5) * 0.12;
+      smx += (mx - smx) * 0.04;
+      smy += (my - smy) * 0.04;
+      const x = Math.sin(t * 0.9) * 4 + Math.sin(t * 0.37) * 2.5 + smx * 14;
+      const y = Math.cos(t * 0.7) * 3 + Math.sin(t * 0.23) * 2 + smy * 9;
+      const r = Math.sin(t * 0.5) * 0.12 + smx * 0.25;
       heroCanvas.style.transform = `scale(1.06) translate3d(${x}px, ${y}px, 0) rotate(${r}deg)`;
     }
 
