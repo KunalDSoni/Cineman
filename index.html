@@ -39,6 +39,21 @@
       Desktop Chrome's vibrate() is a silent no-op that still returns truthy, so we
       gate the real buzz on a touch-device media query, never on that return value.
       Every haptic is paired with its sound for perceived realism.
+  (d) THE CLAP SEQUENCE — the Slate intro plays the real cinematic clap VIDEO
+      (assets/Clap). A six-phase haptic score rides its timeline, all pinned to one
+      frame: the sticks snap shut at t≈3.33s (the audio transient peak + visual
+      contact, measured from the file's sample tables). Phases:
+        1 PRESENCE   — breathing aura (+ a faint desktop heartbeat) before the tap.
+        2 LIFT       — accelerating micro-pulses (rising frequency + intensity).
+        3 SUSPENSION — ~230ms of total silence: the held breath before contact.
+        4 IMPACT     — one dense strike: short firm buzz + sub-bass WEIGHT layered
+                       under the video's own crack + a flash/shake on the exact frame.
+        5 RESONANCE  — a ~30% secondary pulse (material settling).
+        6 DISSIPATION— a tiny fade-out, then the iris reveals the site.
+      Sync is sample/frame-accurate: a requestVideoFrameCallback loop reads the
+      presented frame's mediaTime; at SUSPEND we arm the contact via the AudioContext
+      clock (audio) + a wall-clock timer (haptic/visual) so all three land together.
+      The video's recorded audio IS the clap; the engine only adds synthetic weight.
   ════════════════════════════════════════════════════════════════
 -->
 
@@ -120,19 +135,37 @@ img{max-width:100%;display:block}
 .slate{position:fixed;inset:0;z-index:300;background:radial-gradient(ellipse at 50% 40%,#0c0a07,#020201 70%);
   display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:6vw}
 .slate:focus-visible{outline:none}
-.slate:focus-visible .board{box-shadow:0 0 0 2px var(--gold),0 40px 90px rgba(0,0,0,.7)}
-.clapper{width:min(560px,86vw);transform-origin:center;will-change:transform}
-.clap-sticks{height:clamp(46px,7vw,74px);display:flex;transform-origin:8% 100%;will-change:transform;position:relative;z-index:2}
-.clap-sticks .stripe{flex:1;background:repeating-linear-gradient(115deg,#f4efe2 0 26px,#0b0b0c 26px 52px)}
-.clap-hinge{position:absolute;left:5%;bottom:-6px;width:14px;height:14px;border-radius:50%;background:#2a2520;border:2px solid #6b5d44;z-index:3}
-.board{background:linear-gradient(160deg,#191512,#0c0907);border:1px solid #2c2620;border-top:none;
-  padding:clamp(18px,3vw,30px);box-shadow:0 40px 90px rgba(0,0,0,.7);position:relative}
-.board-row{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#2c2620;border:1px solid #2c2620;margin-bottom:1px}
-.board-cell{background:#0e0b08;padding:.5rem .8rem;text-align:left}
-.board-cell .k{font-size:.5rem;letter-spacing:.28em;color:var(--muted);text-transform:uppercase}
-.board-cell .v{font-family:var(--disp);font-size:clamp(1.1rem,2.6vw,1.7rem);color:var(--gold);line-height:1;letter-spacing:.04em}
-.board-prod{background:#0e0b08;padding:.55rem .8rem;text-align:left;border:1px solid #2c2620;border-bottom:none}
-.board-prod .v{font-family:var(--disp);font-size:clamp(1.3rem,3vw,2rem);letter-spacing:.06em;color:var(--cream)}
+.slate:focus-visible .slate-stage{box-shadow:0 0 0 2px var(--gold),0 40px 120px rgba(0,0,0,.8)}
+
+/* the clap is played from the real cinematic video asset, framed like a viewfinder */
+.presence-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:min(1100px,112vw);height:min(760px,86vh);border-radius:50%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(228,180,74,.16),rgba(228,180,74,.04) 45%,transparent 70%);
+  animation:breathe 3.8s var(--ease) infinite;will-change:opacity,transform}
+@keyframes breathe{0%,100%{opacity:.10;transform:translate(-50%,-50%) scale(.97)}50%{opacity:.30;transform:translate(-50%,-50%) scale(1.05)}}
+body.rolling .presence-glow{animation:none}
+.slate-stage{position:relative;z-index:1;width:min(880px,92vw);aspect-ratio:1578/996;
+  border-radius:5px;overflow:hidden;background:#000;transform-origin:center;
+  box-shadow:0 40px 120px rgba(0,0,0,.8),0 0 0 1px rgba(228,180,74,.10);
+  will-change:transform,filter}
+.slate-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;background:#000}
+/* viewfinder furniture */
+.viewfinder{position:absolute;inset:0;z-index:5;pointer-events:none;font-family:var(--ui)}
+.vf-corner{position:absolute;width:24px;height:24px;border:2px solid rgba(240,232,213,.5)}
+.vf-corner.tl{top:14px;left:14px;border-right:none;border-bottom:none}
+.vf-corner.tr{top:14px;right:14px;border-left:none;border-bottom:none}
+.vf-corner.bl{bottom:14px;left:14px;border-right:none;border-top:none}
+.vf-corner.br{bottom:14px;right:14px;border-left:none;border-top:none}
+.vf-rec{position:absolute;top:15px;left:50%;transform:translateX(-50%);display:flex;gap:.55rem;align-items:center;
+  font-size:.55rem;letter-spacing:.32em;color:var(--cream);text-transform:uppercase;opacity:.82;white-space:nowrap}
+.vf-rec .dot{width:7px;height:7px;border-radius:50%;background:#e0483a;box-shadow:0 0 12px #e0483a;animation:recblink 1.1s steps(1) infinite}
+.vf-tc{position:absolute;bottom:14px;right:16px;font-family:var(--disp);font-size:clamp(.9rem,2vw,1.15rem);
+  letter-spacing:.1em;color:var(--gold);opacity:.9;text-shadow:0 0 12px rgba(228,180,74,.4)}
+.vf-vig{position:absolute;inset:0;z-index:6;pointer-events:none;box-shadow:inset 0 0 140px rgba(0,0,0,.66)}
+.vf-grain{position:absolute;inset:0;z-index:6;pointer-events:none;mix-blend-mode:overlay;opacity:.08;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}
+/* the contact flash — a brief bloom at the exact frame the sticks snap shut */
+#impactFlash{position:fixed;inset:0;z-index:310;pointer-events:none;background:#fff;opacity:0;mix-blend-mode:screen}
 .slate-cta{margin-top:clamp(22px,4vw,40px);font-weight:600;letter-spacing:.4em;font-size:.72rem;color:var(--cream);
   text-transform:uppercase;display:inline-flex;align-items:center;gap:.8rem}
 .slate-cta .blink{width:9px;height:9px;border-radius:50%;background:#e0483a;box-shadow:0 0 14px #e0483a;animation:recblink 1.1s steps(1) infinite}
@@ -373,21 +406,24 @@ section{position:relative;padding:clamp(80px,12vh,150px) clamp(24px,6vw,90px);mi
 <!-- iris reveal -->
 <div id="iris" aria-hidden="true"></div>
 
+<!-- contact flash (impact bloom) -->
+<div id="impactFlash" aria-hidden="true"></div>
+
 <!-- THE SLATE (intro) -->
 <div class="slate" id="slate" role="button" tabindex="0"
      aria-label="Scene 01, Take 01. Click or press Enter to roll camera and enable sound.">
-  <div class="clapper" id="clapper">
-    <div class="clap-sticks" id="sticks"><div class="stripe"></div><div class="clap-hinge"></div></div>
-    <div class="board">
-      <div class="board-prod"><span class="k" style="font-size:.5rem;letter-spacing:.28em;color:var(--muted)">Production</span><div class="v">CINEMAN PRODUCTIONS</div></div>
-      <div class="board-row">
-        <div class="board-cell"><div class="k">Scene</div><div class="v">01</div></div>
-        <div class="board-cell"><div class="k">Take</div><div class="v">01</div></div>
-      </div>
-      <div class="board-row">
-        <div class="board-cell"><div class="k">Roll</div><div class="v">A</div></div>
-        <div class="board-cell"><div class="k">Director</div><div class="v">YOU</div></div>
-      </div>
+  <div class="presence-glow" aria-hidden="true"></div>
+  <div class="slate-stage" id="stage">
+    <video class="slate-video" id="clapVideo" playsinline webkit-playsinline preload="auto" aria-hidden="true">
+      <source src="assets/Clap/Clap_Cinematic.mp4" type="video/mp4">
+    </video>
+    <div class="viewfinder" aria-hidden="true">
+      <span class="vf-corner tl"></span><span class="vf-corner tr"></span>
+      <span class="vf-corner bl"></span><span class="vf-corner br"></span>
+      <div class="vf-rec"><span class="dot"></span> REC · SCN 01 · TAKE 01</div>
+      <div class="vf-tc" id="vfTc">00:00:00:00</div>
+      <div class="vf-vig"></div>
+      <div class="vf-grain"></div>
     </div>
   </div>
   <div class="slate-cta"><span class="blink" aria-hidden="true"></span> CLICK TO ROLL</div>
@@ -622,6 +658,40 @@ class AudioEngine{
     }
     this.stopHum(dt+.4);
   }
+  // ── CLAP REINFORCEMENT ── The video carries the real recorded crack; these add the
+  // synthetic *weight* under it. Scheduled on the AudioContext clock (when) for sample-
+  // accurate alignment with the contact frame. Routed through master, so MOS mutes them.
+  impact(when){ if(!this.ctx)return; const t=when||this.t;
+    // dense, fast sub-bass body — the chest-weight of the strike
+    const o=this.ctx.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+.10);
+    const og=this.ctx.createGain();og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(.62,t+.005);og.gain.exponentialRampToValueAtTime(.0001,t+.32);
+    o.connect(og);og.connect(this.master);o.start(t);o.stop(t+.36);
+    // an octave lower — the floor
+    const o2=this.ctx.createOscillator();o2.type='sine';
+    o2.frequency.setValueAtTime(80,t);o2.frequency.exponentialRampToValueAtTime(30,t+.14);
+    const o2g=this.ctx.createGain();o2g.gain.setValueAtTime(.0001,t);o2g.gain.exponentialRampToValueAtTime(.42,t+.008);o2g.gain.exponentialRampToValueAtTime(.0001,t+.42);
+    o2.connect(o2g);o2g.connect(this.master);o2.start(t);o2.stop(t+.46);
+    // tight high transient to sharpen the contact edge beneath the video's crack
+    const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2400;
+    const ng=this.ctx.createGain();this._env(ng,t,.0005,.35,.035);
+    n.connect(hp);hp.connect(ng);ng.connect(this.master);n.start(t);n.stop(t+.05);
+  }
+  // a small settling thud — used for resonance (material ringing) + dissipation (completion)
+  thud(when,g,hz){ if(!this.ctx)return; const t=when||this.t;
+    const o=this.ctx.createOscillator();o.type='sine';
+    o.frequency.setValueAtTime(hz*2.4,t);o.frequency.exponentialRampToValueAtTime(hz,t+.05);
+    const og=this.ctx.createGain();og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(g,t+.006);og.gain.exponentialRampToValueAtTime(.0001,t+.16);
+    o.connect(og);og.connect(this.master);o.start(t);o.stop(t+.2);
+  }
+  // a whisper-soft rising blip — the "loading energy" of the lift phase (very low level)
+  liftTick(when,hz,g){ if(!this.audible)return; const t=when||this.t;
+    const o=this.ctx.createOscillator();o.type='triangle';
+    o.frequency.setValueAtTime(hz,t);o.frequency.linearRampToValueAtTime(hz*1.05,t+.05);
+    const lp=this.ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=540;
+    const og=this.ctx.createGain();this._env(og,t,.006,g,.05);
+    o.connect(lp);lp.connect(og);og.connect(this.master);o.start(t);o.stop(t+.09);
+  }
   setMuted(m){ this.muted=m; if(this.master){const t=this.t;this.master.gain.setTargetAtTime(m?0:.9,t,.05);} }
   suspend(){ try{if(this.ctx&&this.ctx.state==='running')this.ctx.suspend();}catch(e){} }
   resume(){ try{if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();}catch(e){} }
@@ -717,28 +787,39 @@ function microJolt(amp,target){
     {x:0,y:0,duration:.07}
   ],ease:'none'});
 }
-/* The clapperboard physically recoils from the strike — the signature haptic
-   moment. Always shown: it's what's on screen at clap-time (#filmstage is hidden
-   behind the Slate), and on desktop/iOS — which have no vibration hardware — this
-   visible kick IS the haptic. Paired with real device vibration in roll(). */
-function clapperKick(){
-  gsap.fromTo(sticks,{rotation:-30},{rotation:0,duration:.11,ease:'power4.in'});
-  if(REDUCED) return;
-  gsap.killTweensOf('#clapper');
-  gsap.fromTo('#clapper',{x:0,y:0,scale:1},{keyframes:[
-    {scale:.95,y:4,duration:.05,ease:'power2.in'},
-    {x:6,y:-5,scale:1,duration:.05},
-    {x:-5,y:4,duration:.05},
-    {x:3,y:-2,duration:.05},
-    {x:0,y:0,duration:.08,ease:'power2.out'}
+/* A generic transform "shudder" — a 4-step kick that reads as a physical jolt.
+   amp scales how violent it is (impact ≈ 14, resonance ≈ 3, dissipation ≈ 1). */
+function shudder(el,amp){
+  if(REDUCED) return; const a=amp;
+  gsap.killTweensOf(el);
+  gsap.fromTo(el,{x:0,y:0},{keyframes:[
+    {x:a,y:-a*.7,duration:.022},
+    {x:-a*.8,y:a*.6,duration:.022},
+    {x:a*.5,y:-a*.4,duration:.026},
+    {x:-a*.28,y:a*.18,duration:.03},
+    {x:0,y:0,duration:.06}
   ],ease:'none'});
 }
 /* pair a sound with its haptic so they hit as one event */
 function hit(sound,pattern,jolt){ if(sound) sound(); Haptics.fire(pattern,jolt); }
 
-/* ═══════════ 3. INTRO — THE SLATE ═══════════ */
-const slate=$('#slate'), sticks=$('#sticks'), iris=$('#iris');
+/* ═══════════ 3. INTRO — THE SLATE (frame-perfect clap sequence) ═══════════ */
+/*  The clap is played from the real cinematic video asset (assets/Clap). Six
+    haptic phases ride its timeline — Presence → Lift → Suspension → Impact →
+    Resonance → Dissipation — so the body feels the slate before the mind reads it.
+
+    The whole timeline is pinned to ONE frame: the sticks snap shut at t≈3.33s
+    (the audio transient peak + the visual contact point, measured from the file).
+    The video's own recorded crack is the clap sound; we layer synthetic sub-bass
+    WEIGHT under it and fire the device haptic + screen kick at the same instant.   */
+const slate=$('#slate'), stage=$('#stage'), video=$('#clapVideo'),
+      iris=$('#iris'), impactFlash=$('#impactFlash'), vfTc=$('#vfTc'),
+      presence=$('.presence-glow');
 let rolled=false, lenis=null;
+
+// seconds into the 24fps / 6.04s clip
+const T={ LIFT:1.15, SUSPEND:3.10, IMPACT:3.33, RESONANCE:3.39, DISSIPATE:3.50, REVEAL:4.18 };
+const hasRVFC=('requestVideoFrameCallback' in HTMLVideoElement.prototype);
 
 function buildScroll(){
   lenis=new Lenis({duration:1.5,easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)),smoothWheel:true,wheelMultiplier:.85});
@@ -747,50 +828,156 @@ function buildScroll(){
   gsap.ticker.add(t=>lenis.raf(t*1000)); gsap.ticker.lagSmoothing(0);
   lenis.on('scroll',onReelScroll);
 }
+
+/* ── PHASE 1 · PRESENCE ──  Before the tap: a breathing aura (CSS) plus, on devices
+   that can't buzz un-gestured, a near-imperceptible heartbeat so the slate feels
+   physically *present*. Stops the instant we roll. */
+let presenceTimer=null;
+function startPresence(){
+  if(REDUCED || COARSE) return;            // no pre-gesture buzz on touch; the aura carries it
+  const beat=()=>{ if(rolled) return; microJolt(.22,stage); presenceTimer=setTimeout(beat,2600); };
+  presenceTimer=setTimeout(beat,1500);
+}
+function stopPresence(){ clearTimeout(presenceTimer); }
+
+/* ── PHASE 2 · LIFT ──  Accelerating micro-pulses as the mechanism loads energy.
+   Frequency rises (gaps shrink) and intensity ramps, mapped to the on-screen wind-up. */
+function buildLiftPulses(){
+  const arr=[]; let t=T.LIFT, gap=.34, i=0;
+  while(t < T.SUSPEND-.05){ arr.push(t); gap=Math.max(.075,gap*.86); t+=gap; i++; }
+  return arr;
+}
+function firePulse(idx,total){
+  const f=total>1 ? idx/(total-1) : 1;          // 0→1 tension ramp
+  Haptics.buzz([0,Math.round(4+7*f)]);          // Android: ultra-short tick, lengthening slightly
+  if(engine.audible) engine.liftTick(0, 50+90*f, .035+.085*f);   // soft rising "loading" blip
+  if(!REDUCED){
+    gsap.killTweensOf(presence);
+    gsap.fromTo(presence,{opacity:.12},{opacity:.16+.32*f,duration:.05,yoyo:true,repeat:1,ease:'power1.out'});
+    if(!Haptics.canVibrate) microJolt(.16+.5*f, stage);          // desktop/iOS: felt as a visible tick
+  }
+}
+
+/* sequence state */
+let liftPulses=[], pulseIdx=0, suspendArmed=false, impactFired=false, impactTimer=null, videoErrored=false;
+
+function updateTC(ct){
+  if(!vfTc) return;
+  const p=n=>String(n).padStart(2,'0');
+  vfTc.textContent=p(Math.floor(ct/3600))+':'+p(Math.floor(ct/60)%60)+':'+p(Math.floor(ct)%60)+':'+p(Math.floor((ct%1)*24));
+}
+function startSequence(){
+  liftPulses=buildLiftPulses(); pulseIdx=0; suspendArmed=false;
+  const onFrame=(now,meta)=>{
+    const ct = meta ? meta.mediaTime : video.currentTime;
+    tick(ct, now);
+    if(ct < T.REVEAL+.2 && !video.ended){
+      if(hasRVFC) video.requestVideoFrameCallback(onFrame);
+      else requestAnimationFrame(t2=>onFrame(t2,null));
+    }
+  };
+  if(hasRVFC) video.requestVideoFrameCallback(onFrame);
+  else requestAnimationFrame(t2=>onFrame(t2,null));
+}
+function tick(ct, now){
+  updateTC(ct);
+  // PHASE 2 — LIFT: fire each pulse as the clip crosses its timestamp
+  while(pulseIdx<liftPulses.length && ct>=liftPulses[pulseIdx] && ct<T.SUSPEND){
+    firePulse(pulseIdx, liftPulses.length); pulseIdx++;
+  }
+  // PHASE 3 — SUSPENSION: hard silence, then arm the impact with sub-frame precision
+  if(!suspendArmed && ct>=T.SUSPEND){
+    suspendArmed=true; pulseIdx=liftPulses.length;
+    Haptics.buzz([0]);                               // cancel any lingering vibration → the held breath
+    armImpact(ct, now);
+  }
+  // backstop: never miss contact if the precise timer was throttled
+  if(!impactFired && ct>=T.IMPACT) fireImpact();
+}
+function armImpact(ct, now){
+  const rate=video.playbackRate||1;
+  const lead=Math.max(0,(T.IMPACT-ct)/rate);         // seconds until the sticks meet
+  if(engine.ctx) engine.impact(engine.ctx.currentTime+lead);   // sub-bass weight, sample-accurate
+  clearTimeout(impactTimer);
+  impactTimer=setTimeout(fireImpact, lead*1000);     // haptic + visual on the same wall-clock instant
+}
+function fireImpact(){
+  if(impactFired) return; impactFired=true; clearTimeout(impactTimer);
+  // PHASE 4 — IMPACT: one decisive, dense strike (a strike, not a buzz)
+  Haptics.buzz([0,30]);
+  Haptics.iosTick();
+  if(videoErrored && engine.audible){ engine.clap(); engine.impact(); }   // degraded path keeps a clap
+  if(!REDUCED){
+    gsap.killTweensOf(impactFlash);
+    gsap.fromTo(impactFlash,{opacity:.82},{opacity:0,duration:.3,ease:'power3.out'});
+    shudder(stage,14);
+    gsap.fromTo(stage,{scale:1},{scale:1.02,duration:.05,yoyo:true,repeat:1,ease:'power2.out'});
+  }
+  // PHASE 5 — RESONANCE (+~60ms): material settling, ~30%
+  setTimeout(()=>{ Haptics.buzz([0,11]); if(engine.ctx) engine.thud(0,.30,52); shudder(stage,3); },
+    (T.RESONANCE-T.IMPACT)*1000);
+  // PHASE 6 — DISSIPATION (+~170ms): the action is finished
+  setTimeout(()=>{ Haptics.buzz([0,6]); if(engine.ctx) engine.thud(0,.12,44); shudder(stage,1.1); },
+    (T.DISSIPATE-T.IMPACT)*1000);
+  // hand off into the site
+  setTimeout(reveal, (T.REVEAL-T.IMPACT)*1000);
+}
+let revealed=false;
+function reveal(){
+  if(revealed) return; revealed=true;
+  // camera "rolls" into the experience
+  if(engine.audible) engine.motor();
+  // letterbox locks the frame in
+  document.documentElement.style.setProperty('--bar','7vh');
+  gsap.fromTo('.bar-top',{y:'-120%'},{y:0,duration:.55,ease:'power3.inOut'});
+  gsap.fromTo('.bar-bottom',{y:'120%'},{y:0,duration:.55,ease:'power3.inOut'});
+  // dismiss the slate + iris-reveal the site
+  const tl=gsap.timeline({onComplete:startExperience});
+  tl.to(slate,{opacity:0,duration:.6,ease:'power2.inOut',
+    onComplete:()=>{ slate.style.display='none'; try{video.pause();}catch(e){} }},0);
+  if(REDUCED){ tl.set(iris,{display:'none'},0); }
+  else{
+    const p={r:0};
+    tl.to(p,{r:175,duration:1.2,ease:'power2.inOut',
+      onUpdate:()=>iris.style.setProperty('--r',p.r+'vmax'),
+      onComplete:()=>iris.style.display='none'},.1);
+  }
+  setTimeout(()=>{ if(engine.audible && !engine.hum && !wrapped) engine.startHum(); },520);
+}
+
 async function roll(){
   if(rolled)return; rolled=true;
-
-  // CLAP — fire the physical hit IMMEDIATELY, inside the click gesture so device
-  // vibration is permitted: a real buzz (mobile) + a guaranteed visible recoil of
-  // the clapperboard (on desktop/iOS that kick IS the haptic).
-  Haptics.initIOS();              // ensure the iOS haptic switch exists (idempotent)
-  Haptics.buzz(Haptics.LEVELS.high.buzz); // Android: the HIGH-point motor pattern (the clap is the peak)
-  Haptics.iosTick();              // iOS 17.4+: real system haptic, inside this tap gesture
-  clapperKick();                  // everyone: the visible clapperboard recoil
-
-  const ready=await engine.init();           // (b) AudioContext born from this gesture
-  // honour any persisted MOS choice from earlier in the session
-  const pref=sessionStorage.getItem(SS_KEY);
-  if(pref==='mos'){ engine.setMuted(true); setToggle(false); } else { setToggle(true); }
-
-  if(ready) engine.clap();                    // the clap sound (needs the context)
-
-  // MOTOR whir, then THREAD the reel (hum)
-  setTimeout(()=>{ if(ready)engine.motor(); },170);
-  setTimeout(()=>{ if(ready&&!engine.muted)engine.startHum(); },560);
-
-  // letterbox in
-  document.documentElement.style.setProperty('--bar','7vh');
-  gsap.to('.bar-top',{y:0,duration:.7,ease:'power3.inOut'});
-  gsap.to('.bar-bottom',{y:0,duration:.7,ease:'power3.inOut'});
-
-  // dismiss slate + iris reveal
-  const tl=gsap.timeline({onComplete:startExperience});
-  tl.to(slate,{opacity:0,duration:.5,ease:'power2.inOut',delay:.25,onComplete:()=>slate.style.display='none'},0);
-  if(REDUCED){
-    tl.set(iris,{display:'none'},0);
-  }else{
-    const p={r:0};
-    tl.to(p,{r:175,duration:1.25,ease:'power2.inOut',
-      onUpdate:()=>iris.style.setProperty('--r',p.r+'vmax'),
-      onComplete:()=>iris.style.display='none'},.2);
-  }
+  stopPresence();
   document.body.classList.add('rolling');
+
+  // The TAP is the gesture: it permits sound + vibration and seeds the first trusted
+  // iOS haptic. Start the video INSIDE the gesture (before any await) so sound plays.
+  Haptics.initIOS(); Haptics.iosTick();
+  Haptics.buzz([0,6]);                         // a whisper at lift-off (Phase 1→2 seed)
+
+  const mos=(sessionStorage.getItem(SS_KEY)==='mos');
+  video.muted=mos;                             // MOS = silent take (the video carries the clap)
+  try{ video.currentTime=0; }catch(e){}
+  const pp=video.play();
+  if(pp&&pp.catch) pp.catch(()=>{
+    // last resort: retry muted; if even that fails, don't strand the visitor — go straight to impact
+    video.muted=true; video.play().catch(()=>{ videoErrored=true; if(!impactFired) fireImpact(); });
+  });
+  video.addEventListener('error',()=>{ videoErrored=true; if(!impactFired) fireImpact(); },{once:true});
+
+  startSequence();
+
+  const ready=await engine.init();             // AudioContext from the same gesture
+  engine.setMuted(mos); setToggle(!mos);
+
+  // fail-safe: if the video stalls/errors past its length, force the handoff
+  setTimeout(()=>{ if(!impactFired) fireImpact(); }, 7800);
 }
 slate.addEventListener('click',roll);
 slate.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();roll();} });
 Haptics.initIOS();   // pre-create the iOS haptic switch so it's settled before the first tap
-Haptics.armTap(slate);   // real finger tap on the clapperboard fires a trusted iOS haptic
+Haptics.armTap(slate);   // real finger tap on the slate fires a trusted iOS haptic
+startPresence();     // Phase 1 — the slate is physically present before you roll
 
 /* ═══════════ 4. EXPERIENCE (post-roll) ═══════════ */
 function startExperience(){
