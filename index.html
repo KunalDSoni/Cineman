@@ -575,7 +575,13 @@ class AudioEngine{
     if(this.ctx)return true;
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return false;
     this.ctx=new AC();
-    this.master=this.ctx.createGain(); this.master.gain.value=0.9; this.master.connect(this.ctx.destination);
+    this.master=this.ctx.createGain(); this.master.gain.value=0.9;
+    // a gentle brick-wall limiter glues the impact and prevents the low-end from clipping —
+    // the difference between a "loud" hit and an "expensive" one.
+    this.limiter=this.ctx.createDynamicsCompressor();
+    this.limiter.threshold.value=-3; this.limiter.knee.value=6; this.limiter.ratio.value=12;
+    this.limiter.attack.value=.002; this.limiter.release.value=.18;
+    this.master.connect(this.limiter); this.limiter.connect(this.ctx.destination);
     // 1s reusable white-noise buffer
     const len=Math.floor(this.ctx.sampleRate); this._buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
     const d=this._buf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
@@ -672,39 +678,102 @@ class AudioEngine{
     }
     this.stopHum(dt+.4);
   }
-  // ── CLAP REINFORCEMENT ── The video carries the real recorded crack; these add the
-  // synthetic *weight* under it. Scheduled on the AudioContext clock (when) for sample-
-  // accurate alignment with the contact frame. Routed through master, so MOS mutes them.
-  impact(when){ if(!this.ctx)return; const t=when||this.t;
-    // dense, fast sub-bass body — the chest-weight of the strike
-    const o=this.ctx.createOscillator();o.type='sine';
-    o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(40,t+.10);
-    const og=this.ctx.createGain();og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(.62,t+.005);og.gain.exponentialRampToValueAtTime(.0001,t+.32);
-    o.connect(og);og.connect(this.master);o.start(t);o.stop(t+.36);
-    // an octave lower — the floor
-    const o2=this.ctx.createOscillator();o2.type='sine';
-    o2.frequency.setValueAtTime(80,t);o2.frequency.exponentialRampToValueAtTime(30,t+.14);
-    const o2g=this.ctx.createGain();o2g.gain.setValueAtTime(.0001,t);o2g.gain.exponentialRampToValueAtTime(.42,t+.008);o2g.gain.exponentialRampToValueAtTime(.0001,t+.42);
-    o2.connect(o2g);o2g.connect(this.master);o2.start(t);o2.stop(t+.46);
-    // tight high transient to sharpen the contact edge beneath the video's crack
-    const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2400;
-    const ng=this.ctx.createGain();this._env(ng,t,.0005,.35,.035);
-    n.connect(hp);hp.connect(ng);ng.connect(this.master);n.start(t);n.stop(t+.05);
+  // ════════ CLAP SOUND DESIGN ════════
+  // The VIDEO carries the authentic, close-mic slate snap (frame-locked). These procedural
+  // layers add what a phone speaker can't capture: premium low-frequency BODY, a studio
+  // ROOM tail, mechanical loading detail and air. Confidence, not spectacle — no booms,
+  // no risers, no whooshes. Everything routes through master → limiter.
+
+  // lazy studio-room convolver (a short, slightly dark reflection — "the clap in a room")
+  _verb(){
+    if(this.conv) return this.conv;
+    const len=Math.floor(this.ctx.sampleRate*0.4), ir=this.ctx.createBuffer(2,len,this.ctx.sampleRate);
+    for(let ch=0;ch<2;ch++){ const d=ir.getChannelData(ch);
+      for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); } }
+    this.conv=this.ctx.createConvolver(); this.conv.buffer=ir;
+    const lp=this.ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3000;
+    this.wet=this.ctx.createGain(); this.wet.gain.value=.5;
+    this.conv.connect(lp); lp.connect(this.wet); this.wet.connect(this.master);
+    return this.conv;
   }
-  // a small settling thud — used for resonance (material ringing) + dissipation (completion)
-  thud(when,g,hz){ if(!this.ctx)return; const t=when||this.t;
-    const o=this.ctx.createOscillator();o.type='sine';
-    o.frequency.setValueAtTime(hz*2.4,t);o.frequency.exponentialRampToValueAtTime(hz,t+.05);
-    const og=this.ctx.createGain();og.gain.setValueAtTime(.0001,t);og.gain.exponentialRampToValueAtTime(g,t+.006);og.gain.exponentialRampToValueAtTime(.0001,t+.16);
-    o.connect(og);og.connect(this.master);o.start(t);o.stop(t+.2);
+  // 15% MATERIAL AWARENESS — a barely-there low mass tone: "a heavy object is present"
+  presence(on){ if(!this.ctx)return; const t=this.t;
+    if(on){ if(this._pres)return;
+      const o=this.ctx.createOscillator();o.type='sine';o.frequency.value=40;
+      const o2=this.ctx.createOscillator();o2.type='sine';o2.frequency.value=57;   // slow beat = "alive"
+      const g=this.ctx.createGain();g.gain.value=0;
+      o.connect(g);o2.connect(g);g.connect(this.master);o.start(t);o2.start(t);
+      g.gain.linearRampToValueAtTime(.12,t+1.1);
+      this._pres={o,o2,g};
+    } else if(this._pres){ const p=this._pres;this._pres=null;
+      p.g.gain.cancelScheduledValues(t);p.g.gain.setValueAtTime(p.g.gain.value,t);p.g.gain.linearRampToValueAtTime(0,t+.12);
+      [p.o,p.o2].forEach(o=>{try{o.stop(t+.16)}catch(e){}});
+    }
   }
-  // a whisper-soft rising blip — the "loading energy" of the lift phase (very low level)
-  liftTick(when,hz,g){ if(!this.audible)return; const t=when||this.t;
-    const o=this.ctx.createOscillator();o.type='triangle';
-    o.frequency.setValueAtTime(hz,t);o.frequency.linearRampToValueAtTime(hz*1.05,t+.05);
-    const lp=this.ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=540;
-    const og=this.ctx.createGain();this._env(og,t,.006,g,.05);
-    o.connect(lp);lp.connect(og);og.connect(this.master);o.start(t);o.stop(t+.09);
+  // 35% MECHANICAL LOADING — a precise, engineered drone that "stores energy" as it opens
+  tension(on){ if(!this.ctx)return; const t=this.t;
+    if(on){ if(this._ten)return;
+      const o=this.ctx.createOscillator();o.type='sawtooth';o.frequency.value=68;
+      const bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.Q.value=4.5;bp.frequency.value=170;
+      const g=this.ctx.createGain();g.gain.value=0;
+      o.connect(bp);bp.connect(g);g.connect(this.master);o.start(t);
+      g.gain.linearRampToValueAtTime(.05,t+.4);
+      this._ten={o,bp,g};
+    } else if(this._ten){ const x=this._ten;this._ten=null;
+      x.g.gain.cancelScheduledValues(t);x.g.gain.setValueAtTime(x.g.gain.value,t);x.g.gain.linearRampToValueAtTime(0,t+.1);
+      try{x.o.stop(t+.14)}catch(e){}
+    }
+  }
+  tensionRamp(f){ if(!this._ten)return; const t=this.t;   // f 0→1: open filter + rise = loading
+    this._ten.bp.frequency.setTargetAtTime(170+1000*f,t,.08);
+    this._ten.o.frequency.setTargetAtTime(68+44*f,t,.08);
+    this._ten.g.gain.setTargetAtTime(.045+.06*f,t,.1);
+  }
+  // natural air movement as the arm lifts (gentle — NOT a whoosh/riser)
+  air(when,dur,peak){ if(!this.audible)return; const t=when||this.t;
+    const n=this._noise(),bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.Q.value=.7;
+    bp.frequency.setValueAtTime(480,t);bp.frequency.linearRampToValueAtTime(1300,t+dur);
+    const g=this.ctx.createGain();g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(peak,t+dur*.6);g.gain.linearRampToValueAtTime(.0001,t+dur);
+    n.connect(bp);bp.connect(g);g.connect(this.master);n.start(t);n.stop(t+dur+.05);
+  }
+  // one mechanical winding tick (loading) — tight click + a faint engineered ping; f ramps it
+  loadTick(when,f){ if(!this.audible)return; const t=when||this.t;
+    const n=this._noise(),bp=this.ctx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2300+f*1300;bp.Q.value=3;
+    const g=this.ctx.createGain();this._env(g,t,.0004,.035+.05*f,.012);
+    n.connect(bp);bp.connect(g);g.connect(this.master);n.start(t);n.stop(t+.02);
+    const o=this.ctx.createOscillator();o.type='triangle';o.frequency.setValueAtTime(420+f*300,t);o.frequency.exponentialRampToValueAtTime(300+f*200,t+.03);
+    const og=this.ctx.createGain();this._env(og,t,.001,.018+.03*f,.03);
+    o.connect(og);og.connect(this.master);o.start(t);o.stop(t+.05);
+  }
+  // 70% THE STRIKE — dense, sharp, authoritative: premium body + close-mic transient + room
+  strike(when){ if(!this.ctx)return; const t=when||this.t; const v=this._verb();
+    // chest-punch body (tight, controlled — not a trailer boom)
+    const b=this.ctx.createOscillator();b.type='sine';
+    b.frequency.setValueAtTime(140,t);b.frequency.exponentialRampToValueAtTime(44,t+.09);
+    const bg=this.ctx.createGain();bg.gain.setValueAtTime(.0001,t);bg.gain.exponentialRampToValueAtTime(.62,t+.004);bg.gain.exponentialRampToValueAtTime(.0001,t+.32);
+    b.connect(bg);bg.connect(this.master);b.start(t);b.stop(t+.36);
+    // the floor, an octave down
+    const s=this.ctx.createOscillator();s.type='sine';
+    s.frequency.setValueAtTime(74,t);s.frequency.exponentialRampToValueAtTime(33,t+.13);
+    const sg=this.ctx.createGain();sg.gain.setValueAtTime(.0001,t);sg.gain.exponentialRampToValueAtTime(.46,t+.006);sg.gain.exponentialRampToValueAtTime(.0001,t+.42);
+    s.connect(sg);sg.connect(this.master);s.start(t);s.stop(t+.46);
+    // sharp close-mic transient — reinforces the video crack AND feeds the room (dry + wet)
+    const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2600;
+    const ng=this.ctx.createGain();this._env(ng,t,.0004,.4,.03);
+    n.connect(hp);hp.connect(ng);ng.connect(this.master);ng.connect(v);n.start(t);n.stop(t+.045);
+    // woody body of the slate (sends to the room — the reflection you'd hear in a studio)
+    const w=this._noise(),wbp=this.ctx.createBiquadFilter();wbp.type='bandpass';wbp.frequency.value=900;wbp.Q.value=.7;
+    const wg=this.ctx.createGain();this._env(wg,t,.0008,.2,.05);
+    w.connect(wbp);wbp.connect(wg);wg.connect(this.master);wg.connect(v);w.start(t);w.stop(t+.07);
+  }
+  // 72% ENERGY TRANSFER — aftershock at ~30%: wood/metal handing off the force
+  after(when,scale){ if(!this.ctx)return; const t=when||this.t; const k=scale||.3; const v=this._verb();
+    const b=this.ctx.createOscillator();b.type='sine';b.frequency.setValueAtTime(96,t);b.frequency.exponentialRampToValueAtTime(40,t+.06);
+    const bg=this.ctx.createGain();bg.gain.setValueAtTime(.0001,t);bg.gain.exponentialRampToValueAtTime(.62*k,t+.004);bg.gain.exponentialRampToValueAtTime(.0001,t+.13);
+    b.connect(bg);bg.connect(this.master);b.start(t);b.stop(t+.16);
+    const n=this._noise(),hp=this.ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=2200;
+    const ng=this.ctx.createGain();this._env(ng,t,.0004,.4*k,.02);
+    n.connect(hp);hp.connect(ng);ng.connect(this.master);ng.connect(v);n.start(t);n.stop(t+.03);
   }
   setMuted(m){ this.muted=m; if(this.master){const t=this.t;this.master.gain.setTargetAtTime(m?0:.9,t,.05);} }
   suspend(){ try{if(this.ctx&&this.ctx.state==='running')this.ctx.suspend();}catch(e){} }
@@ -818,23 +887,31 @@ function shudder(el,amp){
 /* pair a sound with its haptic so they hit as one event */
 function hit(sound,pattern,jolt){ if(sound) sound(); Haptics.fire(pattern,jolt); }
 
-/* ═══════════ 3. INTRO — THE SLATE (frame-perfect clap sequence) ═══════════ */
-/*  The clap is played from the real cinematic video asset (assets/Clap). Six
-    haptic phases ride its timeline — Presence → Lift → Suspension → Impact →
-    Resonance → Dissipation — so the body feels the slate before the mind reads it.
+/* ═══════════ 3. INTRO — THE SLATE · "the birth of a film" ═══════════ */
+/*  An authored sensory CURVE rides the real cinematic clap video (assets/Clap):
+      silence → material PRESENCE → mechanical LOADING → BREATH-HOLD → STRIKE →
+      energy transfer → RESONANCE → resolution.
+    The strike is pinned to the MEASURED contact frame (t≈3.33s — the audio transient
+    peak + visual contact, read from the file's sample tables). The video's own close-mic
+    snap is the authentic clap; we add premium low-frequency BODY, a studio ROOM tail,
+    mechanical detail + air, and the device haptic — all meeting within one frame.
 
-    The whole timeline is pinned to ONE frame: the sticks snap shut at t≈3.33s
-    (the audio transient peak + the visual contact point, measured from the file).
-    The video's own recorded crack is the clap sound; we layer synthetic sub-bass
-    WEIGHT under it and fire the device haptic + screen kick at the same instant.   */
+    ADAPTIVE trigger (user-chosen): iOS Safari can ONLY fire a real system haptic on a
+    trusted gesture, so iPhone uses HOLD→RELEASE (the release IS the strike, on contact).
+    Everywhere else plays the curve HANDS-FREE after a single tap to begin (web audio needs
+    one gesture). On devices with no vibration motor the "chest impact" is carried by the
+    low-frequency body — exactly how a real cinema does it.                               */
 const slate=$('#slate'), stage=$('#stage'), video=$('#clapVideo'),
       iris=$('#iris'), impactFlash=$('#impactFlash'), vfTc=$('#vfTc'),
       presence=$('.presence-glow');
 let lenis=null;
 
-// seconds into the 24fps / 6.04s clip
-const T={ LIFT:1.15, SUSPEND:3.10, IMPACT:3.33, RESONANCE:3.39, DISSIPATE:3.50, REVEAL:4.18 };
+// timeline anchors (seconds into the 24fps / 6.04s clip). STRIKE = the measured contact frame;
+// the rest map the brief's curve onto the clip's real events (the % labels are illustrative).
+const T={ PRESENCE:0.70, LOADING:1.90, BREATH:3.15, STRIKE:3.33, REVEAL:4.20 };
 const hasRVFC=('requestVideoFrameCallback' in HTMLVideoElement.prototype);
+// iPhone/iPad → hold-release (trusted-gesture haptic at contact); all else → passive playback.
+const HOLD_MODE = Haptics.isIOS;
 
 function buildScroll(){
   lenis=new Lenis({duration:1.5,easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)),smoothWheel:true,wheelMultiplier:.85});
@@ -844,39 +921,58 @@ function buildScroll(){
   lenis.on('scroll',onReelScroll);
 }
 
-/* ── PHASE 1 · PRESENCE ──  Before the tap: a breathing aura (CSS) plus, on devices
-   that can't buzz un-gestured, a near-imperceptible heartbeat so the slate feels
-   physically *present*. Stops the instant we roll. */
+/* 0% — pre-touch: a slow breathing aura (CSS) + a near-imperceptible desktop heartbeat,
+   so the slate feels like a physical object waiting. No buzz on touch (none is wanted yet). */
 let presenceTimer=null;
-function startPresence(){
-  if(REDUCED || COARSE) return;            // no pre-gesture buzz on touch; the aura carries it
-  const beat=()=>{ if(charging||armed||snapped) return; microJolt(.22,stage); presenceTimer=setTimeout(beat,2600); };
-  presenceTimer=setTimeout(beat,1500);
+function startIdle(){
+  if(REDUCED || COARSE) return;
+  const beat=()=>{ if(started||struck) return; microJolt(.16,stage); presenceTimer=setTimeout(beat,2800); };
+  presenceTimer=setTimeout(beat,1700);
 }
-function stopPresence(){ clearTimeout(presenceTimer); }
+function stopIdle(){ clearTimeout(presenceTimer); }
 
-/* ── PHASE 2 · LIFT ──  Accelerating micro-pulses as the mechanism loads energy.
-   Frequency rises (gaps shrink) and intensity ramps, mapped to the on-screen wind-up. */
-function buildLiftPulses(){
-  const arr=[]; let t=T.LIFT, gap=.34, i=0;
-  while(t < T.SUSPEND-.05){ arr.push(t); gap=Math.max(.075,gap*.86); t+=gap; i++; }
+/* 15% — MATERIAL AWARENESS: presence, not vibration. A low mass tone fades in + a single,
+   barely-perceptible tactile breath (only where there's no motor — a buzz here would read
+   as "vibration", which we explicitly do NOT want yet). */
+function fxPresence(){
+  if(presenceOn) return; presenceOn=true;
+  engine.presence(true);
+  if(!REDUCED) gsap.fromTo(presence,{opacity:.10},{opacity:.22,duration:1.0,ease:'sine.inOut'});
+  if(!Haptics.canVibrate && !REDUCED) microJolt(.13,stage);
+}
+/* 35% — MECHANICAL LOADING: precise, engineered ticks accelerating toward the cocked point,
+   over a rising "storing energy" drone + a soft pass of air. Feels machined, not buzzy. */
+function buildLoadPulses(){
+  const arr=[]; let t=T.LOADING, gap=.26;
+  while(t < T.BREATH-.04){ arr.push(t); gap=Math.max(.07,gap*.85); t+=gap; }
   return arr;
 }
-function firePulse(idx,total){
-  const f=total>1 ? idx/(total-1) : 1;          // 0→1 tension ramp
-  Haptics.buzz([0,Math.round(4+7*f)]);          // Android: ultra-short tick, lengthening slightly
-  if(engine.audible) engine.liftTick(0, 50+90*f, .035+.085*f);   // soft rising "loading" blip
-  if(!REDUCED){
-    gsap.killTweensOf(presence);
-    gsap.fromTo(presence,{opacity:.12},{opacity:.16+.32*f,duration:.05,yoyo:true,repeat:1,ease:'power1.out'});
-    if(!Haptics.canVibrate) microJolt(.16+.5*f, stage);          // desktop/iOS: felt as a visible tick
-  }
+function startLoading(){
+  if(loadingOn) return; loadingOn=true;
+  engine.tension(true);
+  engine.air(0,1.1,.05);
+}
+function fxLoadPulse(f){
+  if(Haptics.canVibrate) Haptics.buzz([0,Math.round(4+6*f)]);   // Android: tight ratchet ticks
+  else if(!REDUCED) microJolt(.12+.42*f,stage);                // desktop/iOS: visible micro-tick
+  if(engine.audible) engine.loadTick(0,f);
+  engine.tensionRamp(f);
+  if(!REDUCED){ gsap.killTweensOf(presence);
+    gsap.fromTo(presence,{opacity:.16},{opacity:.18+.3*f,duration:.05,yoyo:true,repeat:1,ease:'power1.out'}); }
+}
+/* 60% — BREATH HOLD: remove EVERYTHING. The mandatory void (≈180ms) that makes the strike
+   hit harder. Audio near-silent (only the clip's own quiet pre-clap tone), haptics absolute. */
+function breathHold(){
+  if(breathOn) return; breathOn=true;
+  engine.tension(false); engine.presence(false);
+  Haptics.buzz([0]);
 }
 
 /* sequence state */
-const chargeFill=$('#chargeFill'), ctaText=$('#ctaText'), slateCta=$('.slate-cta');
-let liftPulses=[], pulseIdx=0, videoErrored=false;
-let charging=false, armed=false, snapped=false, holdRAF=0, maxHoldTimer=0, wantMuted=false;
+const chargeFill=$('#chargeFill'), ctaText=$('#ctaText'), slateCta=$('.slate-cta'), slateSub=$('.slate-sub');
+let started=false, struck=false, videoErrored=false, wantMuted=false;
+let loadPulses=[], pulseI=0, presenceOn=false, loadingOn=false, breathOn=false;
+let armed=false, holdRAF=0, maxHoldTimer=0, strikeTimer=0;
 function setCta(txt,arm){
   if(ctaText) ctaText.textContent=txt;
   if(slateCta) slateCta.classList.toggle('armed',!!arm);
@@ -888,92 +984,128 @@ function updateTC(ct){
   const p=n=>String(n).padStart(2,'0');
   vfTc.textContent=p(Math.floor(ct/3600))+':'+p(Math.floor(ct/60)%60)+':'+p(Math.floor(ct)%60)+':'+p(Math.floor((ct%1)*24));
 }
-/* ── PHASE 1→2 · HOLD TO WIND ──  pointerdown / keydown is a trusted gesture: it unlocks
-   sound, rolls the wind-up video and ramps the lift pulses. The clip plays to the cocked
-   frame (SUSPEND) and waits there — the held breath — until you release. */
-async function arm(){
-  if(charging||armed||snapped) return;
-  charging=true; stopPresence();
-  document.body.classList.add('rolling','charging');
-  Haptics.initIOS(); Haptics.buzz([0,8]);            // Android: a soft "grab"
-  setCta('WIND…',false);
+/* ── 70·72·80% · THE STRIKE → resonance ──  Visual contact, audio transient and the primary
+   haptic all land together (<~10ms). On iOS this is fired by the user's RELEASE (a trusted
+   gesture → a real Taptic hit). In passive mode it's scheduled on the wall clock to meet the
+   video's frame-locked crack. Dense, sharp, authoritative — then a short ring-out to silence. */
+function fxStrike(){
+  if(struck) return; struck=true;
+  clearTimeout(maxHoldTimer); clearTimeout(strikeTimer); cancelAnimationFrame(holdRAF);
+  document.body.classList.remove('charging');
+  setCta('',false);
+  if(chargeFill) chargeFill.style.transform='scaleX(1)';
 
+  // 70% — THE STRIKE
+  Haptics.iosTick();                       // iOS: genuine system haptic (meaningful only on the trusted release)
+  Haptics.buzz([0,30]);                    // Android: one decisive strike — short + firm (a strike, not a buzz)
+  if(engine.ctx) engine.strike();          // premium body + close-mic transient + studio room
+  if(videoErrored && engine.audible) engine.clap();
+  if(!REDUCED){
+    gsap.killTweensOf(impactFlash);
+    gsap.fromTo(impactFlash,{opacity:.8},{opacity:0,duration:.32,ease:'power3.out'});  // bloom also masks any seek cut
+    shudder(stage,14);
+    gsap.fromTo(stage,{scale:1},{scale:1.02,duration:.05,yoyo:true,repeat:1,ease:'power2.out'});
+  }
+  // 72% — ENERGY TRANSFER: aftershock at ~30% (wood/metal handing off the force)
+  setTimeout(()=>{ Haptics.buzz([0,9]); if(engine.ctx) engine.after(0,.3); if(!REDUCED) shudder(stage,3.4); }, 32);
+  // 80% — RESONANCE: the clip rings out through the room (the convolver tail) + a whisper settle.
+  //        No new vibration — sustained rumble is exactly what the brief forbids.
+  setTimeout(()=>{ if(!REDUCED) shudder(stage,1.0); }, 150);
+  // 100% — RESOLUTION: return to silence, then the site.
+  setTimeout(reveal, 900);
+}
+
+/* ── ANDROID / DESKTOP · PASSIVE ──  one tap to begin (web audio needs a gesture), then the
+   authored curve plays hands-free, synced to the clip's real frames; the strike is scheduled
+   to meet the video's frame-locked crack. */
+function beginPassive(){
+  if(started||struck) return; started=true;
+  stopIdle(); document.body.classList.add('rolling');
+  Haptics.initIOS(); setCta('',false);
   wantMuted=(sessionStorage.getItem(SS_KEY)==='mos');
-  video.muted=true;                                  // silent wind-up — pulses carry it; the crack plays on release
+  video.muted=true;                        // author the 0% silence + curve; unmute for the crack at the breath
   try{ video.currentTime=0; }catch(e){}
   const pp=video.play();
-  try{ video.playbackRate=1.5; }catch(e){}            // wind faster: the cocked point arrives in ~2s, ramp tightens
-  if(pp&&pp.catch) pp.catch(()=>{ videoErrored=true; });
-  video.addEventListener('error',()=>{ videoErrored=true; if(!snapped) snap(); },{once:true});
-
-  liftPulses=buildLiftPulses(); pulseIdx=0;
-  startCharge();
+  if(pp&&pp.catch) pp.catch(()=>{ videoErrored=true; if(!struck) fxStrike(); });
+  video.addEventListener('error',()=>{ videoErrored=true; if(!struck) fxStrike(); },{once:true});
+  loadPulses=buildLoadPulses(); pulseI=0;
   engine.init().then(()=>{ engine.setMuted(wantMuted); setToggle(!wantMuted); });
-
-  clearTimeout(maxHoldTimer);
-  maxHoldTimer=setTimeout(()=>{ if(charging||armed) snap(); }, 9000);   // never hang on a held slate
+  curveLoop(false);
+  setTimeout(()=>{ if(!struck) fxStrike(); }, 9000);   // fail-safe: never strand the reveal
 }
-function startCharge(){
+
+/* ── iOS · HOLD TO WIND, RELEASE TO CLAP ──  identical curve, but the user paces the loading
+   by holding, and the RELEASE (a trusted gesture) fires the strike — the one way iPhone can
+   feel a real system haptic exactly on contact. */
+function beginHold(){
+  if(started||struck) return; started=true;
+  stopIdle(); document.body.classList.add('rolling','charging');
+  Haptics.initIOS(); setCta('WIND…',false);
+  wantMuted=(sessionStorage.getItem(SS_KEY)==='mos');
+  video.muted=true;
+  try{ video.currentTime=0; }catch(e){}
+  const pp=video.play();
+  try{ video.playbackRate=1.5; }catch(e){}            // wind a touch faster so the cocked point arrives sooner
+  if(pp&&pp.catch) pp.catch(()=>{ videoErrored=true; });
+  video.addEventListener('error',()=>{ videoErrored=true; if(!struck) doSnap(); },{once:true});
+  loadPulses=buildLoadPulses(); pulseI=0;
+  engine.init().then(()=>{ engine.setMuted(wantMuted); setToggle(!wantMuted); });
+  curveLoop(true);
+  clearTimeout(maxHoldTimer);
+  maxHoldTimer=setTimeout(()=>{ if(started&&!struck) doSnap(); }, 12000);   // never hang on a held slate
+}
+
+// shared curve driver. hold=true pauses at the breath and waits for release; hold=false
+// schedules the strike to meet the frame-locked crack and plays through.
+function curveLoop(hold){
   const onFrame=(now,meta)=>{
-    if(snapped) return;
+    if(struck || (hold && armed)) return;
     const ct = meta ? meta.mediaTime : video.currentTime;
     updateTC(ct);
-    if(chargeFill) chargeFill.style.transform='scaleX('+clamp(ct/T.SUSPEND,0,1)+')';
-    // PHASE 2 — LIFT pulses, accelerating toward the cocked point
-    while(pulseIdx<liftPulses.length && ct>=liftPulses[pulseIdx] && ct<T.SUSPEND){
-      firePulse(pulseIdx, liftPulses.length); pulseIdx++;
+    if(chargeFill) chargeFill.style.transform='scaleX('+clamp(ct/T.BREATH,0,1)+')';
+    if(ct>=T.PRESENCE && !presenceOn) fxPresence();                 // 15%
+    if(ct>=T.LOADING && !loadingOn)  startLoading();                // 35%
+    if(loadingOn && !breathOn){                                     // mechanical ticks
+      while(pulseI<loadPulses.length && ct>=loadPulses[pulseI] && ct<T.BREATH){
+        fxLoadPulse(pulseI/Math.max(1,loadPulses.length-1)); pulseI++;
+      }
     }
-    // PHASE 3 — SUSPENSION: reached the cocked frame → hold the breath, wait for release
-    if(!armed && ct>=T.SUSPEND){
-      armed=true;
-      try{ video.pause(); video.currentTime=T.SUSPEND; }catch(e){}
-      Haptics.buzz([0]);                              // silence
-      setCta('RELEASE',true);
-      return;                                         // stop looping; the release fires the clap
+    if(ct>=T.BREATH && !breathOn){                                  // 60% breath-hold
+      breathHold();
+      if(hold){
+        armed=true;
+        try{ video.pause(); video.currentTime=T.BREATH; }catch(e){}
+        setCta('RELEASE',true);
+        return;                                                     // wait for the release
+      }
+      video.muted=wantMuted;                                        // unmute so the crack rings at contact
+      armStrike(ct, now);                                           // 70% scheduled to the frame-locked crack
     }
+    if(!hold && ct>=T.STRIKE && !struck) fxStrike();                // backstop
     if(hasRVFC) video.requestVideoFrameCallback(onFrame);
     else holdRAF=requestAnimationFrame(t2=>onFrame(t2,null));
   };
   if(hasRVFC) video.requestVideoFrameCallback(onFrame);
   else holdRAF=requestAnimationFrame(t2=>onFrame(t2,null));
 }
-/* ── PHASES 4·5·6 · RELEASE = THE CLAP ──  pointerup / keyup is a trusted gesture, so on
-   iOS this is the ONE moment a genuine system haptic can fire — and it lands exactly on
-   contact. On every platform the strike is locked to your own release: zero scheduling
-   jitter. The video is driven to the contact frame so what you see/hear meets what you feel. */
-function snap(){
-  if(snapped || (!charging && !armed)) return;
-  snapped=true; charging=false;
-  clearTimeout(maxHoldTimer); cancelAnimationFrame(holdRAF);
-  document.body.classList.remove('charging');
-  setCta('ACTION',false);
-  if(chargeFill) chargeFill.style.transform='scaleX(1)';
-
-  // PHASE 4 — IMPACT (on your release): the decisive strike
-  Haptics.iosTick();                                  // iOS: real system haptic AT contact (release → switch toggle)
-  Haptics.buzz([0,32]);                               // Android: one dense, short strike (a strike, not a buzz)
-  if(engine.ctx) engine.impact();                     // synthetic sub-bass weight, locked to the haptic
-  if(!REDUCED){
-    gsap.killTweensOf(impactFlash);
-    gsap.fromTo(impactFlash,{opacity:.85},{opacity:0,duration:.32,ease:'power3.out'});  // bloom also masks the seek cut
-    shudder(stage,15);
-    gsap.fromTo(stage,{scale:1},{scale:1.022,duration:.05,yoyo:true,repeat:1,ease:'power2.out'});
-  }
-  // drive the video to the contact frame so the visible/audible snap meets the strike
+// passive: fire the strike on the wall clock so it meets the video's own (frame-locked) crack.
+function armStrike(ct, now){
+  const rate=video.playbackRate||1;
+  const lead=Math.max(0,(T.STRIKE-ct)/rate);
+  clearTimeout(strikeTimer);
+  strikeTimer=setTimeout(fxStrike, lead*1000);
+}
+// iOS release = the clap. Drive the clip to the contact frame so the seen/heard snap meets the felt one.
+function doSnap(){
+  if(struck || !started) return;
+  if(!breathOn) breathHold();              // ensure loading/tension is cut even on an early release
   video.muted=wantMuted;
   try{
-    video.playbackRate=1;                             // natural speed through the snap + settle
-    if(video.currentTime < T.IMPACT-.06 || video.currentTime > T.IMPACT+.4) video.currentTime=T.IMPACT-.03;
+    video.playbackRate=1;
+    if(video.currentTime < T.STRIKE-.06 || video.currentTime > T.STRIKE+.4) video.currentTime=T.STRIKE-.03;
     video.play().catch(()=>{});
   }catch(e){}
-  if(videoErrored && engine.audible) engine.clap();   // degraded path keeps a clap
-
-  // PHASE 5 — RESONANCE (+~55ms): material settling, ~30%
-  setTimeout(()=>{ Haptics.buzz([0,12]); if(engine.ctx) engine.thud(0,.30,52); shudder(stage,3.2); }, 55);
-  // PHASE 6 — DISSIPATION (+~165ms): the action is finished
-  setTimeout(()=>{ Haptics.buzz([0,7]);  if(engine.ctx) engine.thud(0,.12,44); shudder(stage,1.2); }, 165);
-  // hand off into the site
-  setTimeout(reveal, 820);
+  fxStrike();
 }
 let revealed=false;
 function reveal(){
@@ -998,17 +1130,29 @@ function reveal(){
   setTimeout(()=>{ if(engine.audible && !engine.hum && !wrapped) engine.startHum(); },520);
 }
 
-// Hold = wind, release = clap. Pointer events cover mouse/touch/pen; up/cancel live on
-// window so we always catch the release even if the finger drifts off the slate.
-slate.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return; arm(); });
-window.addEventListener('pointerup',()=>snap());
-window.addEventListener('pointercancel',()=>snap());
-// keyboard parity: hold Enter/Space to wind, release to clap (keyup is also a trusted gesture)
-slate.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&!e.repeat){ e.preventDefault(); arm(); } });
-slate.addEventListener('keyup',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); snap(); } });
+// set the slate copy + aria to the chosen mode
+if(ctaText) ctaText.textContent = HOLD_MODE ? 'HOLD TO ROLL' : 'TAP TO BEGIN';
+if(slateSub) slateSub.textContent = HOLD_MODE ? 'Press & hold · release to clap · sound on'
+                                              : 'Tap to begin · sound on · headphones recommended';
+slate.setAttribute('aria-label', HOLD_MODE
+  ? 'Scene 01, Take 01. Press and hold to wind the slate, then release to clap. Enables sound.'
+  : 'Scene 01, Take 01. Tap to begin — the slate claps. Enables sound.');
+
+if(HOLD_MODE){
+  // iOS: hold to wind, release to clap. up/cancel on window so we always catch the release.
+  slate.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'&&e.button!==0) return; beginHold(); });
+  window.addEventListener('pointerup',()=>{ if(started) doSnap(); });
+  window.addEventListener('pointercancel',()=>{ if(started) doSnap(); });
+  slate.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&!e.repeat){ e.preventDefault(); beginHold(); } });
+  slate.addEventListener('keyup',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); doSnap(); } });
+  Haptics.armTap(slate);   // overlay a real <input switch> so the RELEASE toggles it → trusted iOS haptic AT contact
+}else{
+  // Android / desktop: one tap to begin, then the authored curve plays hands-free.
+  slate.addEventListener('click',beginPassive);
+  slate.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); beginPassive(); } });
+}
 Haptics.initIOS();   // pre-create the iOS haptic switch so it's settled before the first touch
-Haptics.armTap(slate);   // overlays a real <input switch> so the user's RELEASE toggles it → a trusted iOS haptic AT contact
-startPresence();     // Phase 1 — the slate is physically present before you touch it
+startIdle();         // 0% — the slate is physically present before you touch it
 
 /* ═══════════ 4. EXPERIENCE (post-roll) ═══════════ */
 function startExperience(){
