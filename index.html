@@ -1014,6 +1014,19 @@ function updateTC(ct){
    haptic all land together (<~10ms). On iOS this is fired by the user's RELEASE (a trusted
    gesture → a real Taptic hit). In passive mode it's scheduled on the wall clock to meet the
    video's frame-locked crack. Dense, sharp, authoritative — then a short ring-out to silence. */
+// A short sub-bass chest thump synced to the strike — the low end a phone speaker
+// can still move, so the clap is felt in the body even on a device that can't buzz.
+// Routes through master → limiter, so it adds weight without clipping the mix.
+function subThump(){
+  const e=engine; if(!e.ctx||!e.master) return; const t=e.t;
+  const o=e.ctx.createOscillator(); o.type='sine';
+  o.frequency.setValueAtTime(60,t); o.frequency.exponentialRampToValueAtTime(32,t+.12);
+  const g=e.ctx.createGain();
+  g.gain.setValueAtTime(.0001,t);
+  g.gain.exponentialRampToValueAtTime(.32,t+.006);   // fast attack
+  g.gain.exponentialRampToValueAtTime(.0001,t+.4);   // exp decay
+  o.connect(g); g.connect(e.master); o.start(t); o.stop(t+.44);
+}
 function fxStrike(){
   if(struck) return; struck=true;
   clearTimeout(maxHoldTimer); clearTimeout(strikeTimer); cancelAnimationFrame(holdRAF);
@@ -1025,18 +1038,25 @@ function fxStrike(){
   Haptics.iosTick();                       // iOS: genuine system haptic (meaningful only on the trusted release)
   Haptics.buzz([0,30]);                    // Android: one decisive strike — short + firm (a strike, not a buzz)
   if(engine.ctx) engine.strike();          // premium body + close-mic transient + studio room
+  if(engine.audible) subThump();           // extra chest weight under the crack — the "felt" low end
   if(videoErrored && engine.audible) engine.clap();
   if(!REDUCED){
+    // LAMP STRIKE — a hard white snap, then a fast bloom decay (crisper, brighter than a fade-in).
     gsap.killTweensOf(impactFlash);
-    gsap.fromTo(impactFlash,{opacity:.8},{opacity:0,duration:.32,ease:'power3.out'});  // bloom also masks any seek cut
-    shudder(stage,14);
-    gsap.fromTo(stage,{scale:1},{scale:1.02,duration:.05,yoyo:true,repeat:1,ease:'power2.out'});
+    gsap.timeline().set(impactFlash,{opacity:1}).to(impactFlash,{opacity:0,duration:.45,ease:'expo.out'});
+    // CAMERA RECOIL — a sharp punch-in on the whole frame with an elastic settle. This kinetic
+    // kick is the felt response that substitutes for a buzz where the device can't vibrate.
+    // Transform-only (scale on the parent, shake on the inner stage) so it stays 60fps-safe.
+    gsap.killTweensOf(slate);
+    gsap.timeline()
+      .fromTo(slate,{scale:1},{scale:1.045,duration:.055,ease:'power4.out'})
+      .to(slate,{scale:1,duration:.8,ease:'elastic.out(1,.55)'});
+    shudder(stage,26);                       // a violent first throw — decays via the aftershocks below
   }
-  // 72% — ENERGY TRANSFER: aftershock at ~30% (wood/metal handing off the force)
-  setTimeout(()=>{ Haptics.buzz([0,9]); if(engine.ctx) engine.after(0,.3); if(!REDUCED) shudder(stage,3.4); }, 32);
-  // 80% — RESONANCE: the clip rings out through the room (the convolver tail) + a whisper settle.
-  //        No new vibration — sustained rumble is exactly what the brief forbids.
-  setTimeout(()=>{ if(!REDUCED) shudder(stage,1.0); }, 150);
+  // 72% — ENERGY TRANSFER: aftershock (wood/metal handing off the force).
+  setTimeout(()=>{ Haptics.buzz([0,9]); if(engine.ctx) engine.after(0,.3); if(!REDUCED) shudder(stage,8); }, 36);
+  // 80% — RESONANCE: the clip rings out through the room (the convolver tail) + a final settle shake.
+  setTimeout(()=>{ if(!REDUCED) shudder(stage,2.6); }, 155);
   // 100% — RESOLUTION: return to silence, then the site.
   setTimeout(reveal, 900);
 }
