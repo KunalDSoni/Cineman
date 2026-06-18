@@ -568,6 +568,28 @@ const COARSE=matchMedia('(pointer:coarse)').matches;
 if(COARSE) document.body.classList.add('coarse');
 const SS_KEY='cineman_mos'; // 'sync' | 'mos'
 
+/* ── HAPTIC DEBUG ── enable with ?hdebug : flashes an on-screen badge the
+   instant any armed <input switch> actually toggles. Lets us tell a
+   "tap never reached the switch" failure apart from a "toggled but the
+   OS gave no haptic" failure — without relying on what the hand feels. */
+const DEBUG_HAPTIC=/[?&]hdebug/.test(location.search);
+let _hapBadge=null;
+function flashHaptic(tag){
+  if(!DEBUG_HAPTIC) return;
+  if(!_hapBadge){
+    _hapBadge=document.createElement('div');
+    _hapBadge.style.cssText='position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:2147483647;'+
+      'background:#e4b44a;color:#0a0807;font:600 13px/1 -apple-system,system-ui,sans-serif;'+
+      'padding:11px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .1s;'+
+      'box-shadow:0 4px 18px rgba(0,0,0,.4);';
+    document.body.appendChild(_hapBadge);
+  }
+  _hapBadge.textContent='⚡ switch toggled — '+(tag||'');
+  _hapBadge.style.opacity='1';
+  clearTimeout(_hapBadge.__t);
+  _hapBadge.__t=setTimeout(()=>{ _hapBadge.style.opacity='0'; },480);
+}
+
 /* ═══════════ 1. AUDIO ENGINE (procedural) ═══════════ */
 class AudioEngine{
   constructor(){this.ctx=null;this.master=null;this.muted=false;this.hum=null;this.reelRate=0;this._buf=null;}
@@ -813,7 +835,7 @@ const Haptics={
   // reliably fires the iOS haptic — a scripted .click() on a hidden control does not. The
   // toggle fires on the RELEASE (the click) — exactly the clap moment in our hold→release
   // model — so iPhone feels a genuine system haptic at contact. The click harmlessly bubbles.
-  armTap(el){
+  armTap(el,tag){
     if(!this.isIOS || !el || el.__hapt) return null; el.__hapt=true;
     const lab=document.createElement('label');
     lab.setAttribute('aria-hidden','true');
@@ -824,6 +846,7 @@ const Haptics={
     i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1; i.setAttribute('aria-hidden','true');
     i.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;margin:0;opacity:0;';
     lab.appendChild(i);
+    i.addEventListener('change',()=>flashHaptic(tag||'tap'));   // debug: proves the toggle fired
     if(getComputedStyle(el).position==='static') el.style.position='relative';
     el.appendChild(lab);
     return i;   // caller can bind to the native toggle (the trusted haptic moment)
@@ -1152,7 +1175,7 @@ if(HOLD_MODE){
   // haptic on — so make that toggle BE the clap: the felt tick and the strike are
   // one trusted gesture. A long hold can swallow the synthesized click, so a quick
   // TAP (down+up) toggles it reliably; the wind-up still works if you hold first.
-  const slateSwitch=Haptics.armTap(slate);
+  const slateSwitch=Haptics.armTap(slate,'SLATE');
   if(slateSwitch) slateSwitch.addEventListener('change',()=>{ if(started && !struck) doSnap(); });
 }else{
   // Android / desktop: one tap to begin, then the authored curve plays hands-free.
@@ -1290,7 +1313,7 @@ snd.addEventListener('click',async ()=>{
   engine.lensClick(); Haptics.tier('low',snd,{cue:false});  // toggle = the LOW-point haptic
   if(!engine.muted && !engine.hum && !wrapped) engine.startHum();
 });
-Haptics.armTap(snd);   // real tap on the SYNC/MOS toggle also fires a trusted iOS haptic
+Haptics.armTap(snd,'TOGGLE');   // real tap on the SYNC/MOS toggle also fires a trusted iOS haptic
 
 /* ═══════════ 9. MICRO-INTERACTIONS ═══════════ */
 // rack-focus cards (hover + keyboard focus)
@@ -1302,7 +1325,7 @@ $$('.card').forEach(card=>{
   if(!REDUCED) gsap.set(card.querySelector('.card-media'),{filter:'blur(5px) brightness(.82)'});
   if(!COARSE){ card.addEventListener('mouseenter',()=>rackIn(card)); card.addEventListener('mouseleave',()=>rackOut(card)); }
   card.addEventListener('focus',()=>rackIn(card)); card.addEventListener('blur',()=>rackOut(card));
-  Haptics.armTap(card);          // iOS: a real tap on the card fires a trusted system haptic
+  Haptics.armTap(card,'CARD');    // iOS: a real tap on the card fires a trusted system haptic
   if(COARSE){                    // touch has no hover — tap rack-focuses (overlay carries the haptic)
     card.addEventListener('click',()=>{ rackIn(card); clearTimeout(card.__rt); card.__rt=setTimeout(()=>rackOut(card),1100); });
   }
@@ -1317,7 +1340,7 @@ $$('.btn').forEach(btn=>{
     gsap.set(ir,{left:(e.clientX-r.left)+'px',top:(e.clientY-r.top)+'px',scale:0,opacity:.6});
     gsap.to(ir,{scale:18,opacity:0,duration:.6,ease:'power2.out'});
   });
-  Haptics.armTap(btn);   // iOS: real finger tap on a CTA fires a trusted system haptic
+  Haptics.armTap(btn,'BUTTON');   // iOS: real finger tap on a CTA fires a trusted system haptic
   if(!REDUCED && !COARSE){
     btn.addEventListener('mousemove',e=>{const r=btn.getBoundingClientRect();
       gsap.to(btn,{x:(e.clientX-r.left-r.width/2)*.3,y:(e.clientY-r.top-r.height/2)*.4,duration:.4,ease:'power2.out'});});
