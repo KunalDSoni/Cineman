@@ -68,6 +68,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js"></script>
+<!-- Native CoreHaptics bridge: real Taptic Engine in the Capacitor iOS app,
+     a silent no-op in any browser. See CAPACITOR-HAPTICS-SETUP.md -->
+<script src="js/native-haptics.js" defer></script>
 
 <style>
 :root{
@@ -1022,7 +1025,8 @@ function fxStrike(){
   if(chargeFill) chargeFill.style.transform='scaleX(1)';
 
   // 70% — THE STRIKE
-  Haptics.iosTick();                       // iOS: genuine system haptic (meaningful only on the trusted release)
+  Haptics.iosTick();                       // iOS Safari: best-effort system tick (web ceiling)
+  window.nativeHaptic && window.nativeHaptic('clap');   // native app: real CoreHaptics strike + ring-out
   Haptics.buzz([0,30]);                    // Android: one decisive strike — short + firm (a strike, not a buzz)
   if(engine.ctx) engine.strike();          // premium body + close-mic transient + studio room
   if(videoErrored && engine.audible) engine.clap();
@@ -1231,6 +1235,7 @@ function sprocketPulse(){
   const L=Haptics.LEVELS[scrollLevel]||Haptics.LEVELS.low;
   // Android only: a SHORT ratchet tick, scaled by tier (iOS/desktop: silent — platform).
   Haptics.buzz(scrollLevel==='high'?[0,11]:scrollLevel==='mid'?[0,7]:[0,4]);
+  window.nativeHaptic && window.nativeHaptic('tick');   // native app: a real per-sprocket tick (impossible on iOS web)
   if(REDUCED) return;
   const a=L.flash;
   // opacity + glow + edge-bleed only — never touches transform, so it won't fight fsFrame's translateY.
@@ -1291,6 +1296,7 @@ function setupWrap(){
   const sec=$('#wrap');
   ScrollTrigger.create({trigger:sec,start:'top 62%',
     onEnter:()=>{ wrapped=true; hit(()=>engine.wrap(),[0,60,40,60,40,180],2);
+      window.nativeHaptic && window.nativeHaptic('wrap');
       gsap.fromTo('#reeltail',{opacity:0,y:20},{opacity:1,y:0,duration:.8,ease:'power3.out'}); },
     onLeaveBack:()=>{ wrapped=false; if(engine.audible) engine.startHum(); // re-thread the reel
       gsap.to('#reeltail',{opacity:0,duration:.4}); }
@@ -1311,6 +1317,7 @@ snd.addEventListener('click',async ()=>{
   setToggle(!engine.muted);
   sessionStorage.setItem(SS_KEY, engine.muted?'mos':'sync');
   engine.lensClick(); Haptics.tier('low',snd,{cue:false});  // toggle = the LOW-point haptic
+  window.nativeHaptic && window.nativeHaptic('tick');
   if(!engine.muted && !engine.hum && !wrapped) engine.startHum();
 });
 Haptics.armTap(snd,'TOGGLE');   // real tap on the SYNC/MOS toggle also fires a trusted iOS haptic
@@ -1327,7 +1334,7 @@ $$('.card').forEach(card=>{
   card.addEventListener('focus',()=>rackIn(card)); card.addEventListener('blur',()=>rackOut(card));
   Haptics.armTap(card,'CARD');    // iOS: a real tap on the card fires a trusted system haptic
   if(COARSE){                    // touch has no hover — tap rack-focuses (overlay carries the haptic)
-    card.addEventListener('click',()=>{ rackIn(card); clearTimeout(card.__rt); card.__rt=setTimeout(()=>rackOut(card),1100); });
+    card.addEventListener('click',()=>{ rackIn(card); window.nativeHaptic && window.nativeHaptic('tap'); clearTimeout(card.__rt); card.__rt=setTimeout(()=>rackOut(card),1100); });
   }
 });
 
@@ -1336,6 +1343,7 @@ $$('.btn').forEach(btn=>{
   const ir=document.createElement('span'); ir.className='ir'; btn.appendChild(ir);
   btn.addEventListener('click',e=>{
     engine.shutter(); Haptics.tier('mid',btn,{cue:false});  // buttons = the MID-point haptic
+    window.nativeHaptic && window.nativeHaptic('thud');
     const r=btn.getBoundingClientRect();
     gsap.set(ir,{left:(e.clientX-r.left)+'px',top:(e.clientY-r.top)+'px',scale:0,opacity:.6});
     gsap.to(ir,{scale:18,opacity:0,duration:.6,ease:'power2.out'});

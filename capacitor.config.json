@@ -1,0 +1,9 @@
+{
+  "appId": "com.cineman.reel",
+  "appName": "CineMan",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0a0807"
+  }
+}
