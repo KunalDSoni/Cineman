@@ -35,9 +35,3 @@ build/
 # Temp
 tmp/
 temp/
-
-# Capacitor (generated locally per CAPACITOR-HAPTICS-SETUP.md)
-# Anchored to root so the committed plugin source in native/ios/ is kept.
-/www/
-/ios/
-/android/
