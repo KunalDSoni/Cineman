@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CineMan · iOS Haptic Capability Check</title>
+<style>
+  :root{ color-scheme: dark; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ margin:0; font:16px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+        background:#0a0807; color:#f0e9df; padding:24px 18px 64px; }
+  h1{ font-size:20px; margin:0 0 4px; letter-spacing:.01em; }
+  .sub{ color:#9a8f80; font-size:13px; margin:0 0 22px; }
+  .card{ background:#161210; border:1px solid #2a231d; border-radius:14px;
+         padding:18px; margin:0 0 16px; }
+  .card h2{ font-size:15px; margin:0 0 4px; color:#e4b44a; }
+  .card p{ font-size:13px; color:#b3a899; margin:0 0 14px; }
+  .tap{ display:flex; align-items:center; justify-content:center; min-height:64px;
+        width:100%; border:0; border-radius:11px; font-size:16px; font-weight:600;
+        color:#0a0807; background:linear-gradient(150deg,#f0d090,#e4b44a);
+        position:relative; cursor:pointer; touch-action:manipulation; user-select:none; }
+  .tap:active{ transform:scale(.985); }
+  /* native iOS styled switch */
+  input[switch]{ width:52px; height:32px; }
+  .switchrow{ display:flex; align-items:center; gap:14px; font-size:15px; }
+  .verdict{ font-size:12px; color:#7d7468; margin-top:18px; white-space:pre-wrap;
+            background:#100c0a; border:1px solid #241d18; border-radius:10px; padding:14px; }
+  code{ color:#e4b44a; }
+  .ok{ color:#7bbf6a; } .no{ color:#d2614e; }
+</style>
+</head>
+<body>
+  <h1>iOS Haptic Capability Check</h1>
+  <p class="sub">Tap each test once. Note which ones you physically FEEL. Make sure
+     Settings → Sounds &amp; Haptics → <b>System Haptics</b> is ON and Low Power Mode is OFF.</p>
+
+  <div class="card">
+    <h2>① Real native switch — drag/tap it</h2>
+    <p>Direct manipulation of a native switch. This is the most reliable iOS web haptic. If even THIS does nothing, your device/settings don’t expose web haptics and no code can change that.</p>
+    <label class="switchrow"><input type="checkbox" switch id="rawSwitch"> Toggle me</label>
+  </div>
+
+  <div class="card">
+    <h2>② Trusted tap (label overlay)</h2>
+    <p>Your finger toggles a transparent switch overlaid on the button — the technique used for in-page taps. Should feel a tick on release.</p>
+    <button class="tap" id="trustedBtn">Tap me (trusted)</button>
+  </div>
+
+  <div class="card">
+    <h2>③ Scripted toggle</h2>
+    <p>JavaScript calls <code>.click()</code> on a hidden switch — what The Reel uses for auto/scroll moments. Usually does NOT fire on iOS.</p>
+    <button class="tap" id="scriptBtn">Tap me (scripted)</button>
+  </div>
+
+  <div class="card">
+    <h2>④ navigator.vibrate()</h2>
+    <p>The standard Vibration API. Works on Android; absent on iOS.</p>
+    <button class="tap" id="vibrateBtn">Tap me (vibrate)</button>
+  </div>
+
+  <div class="verdict" id="verdict">reading device…</div>
+
+<script>
+(function(){
+  var ua = navigator.userAgent;
+  var isIOS = /iP(hone|od|ad)/.test(ua) ||
+              (/Mac/.test(navigator.platform||'') && (navigator.maxTouchPoints||0) > 1);
+  var hasVibrate = (typeof navigator.vibrate === 'function');
+
+  // hidden switch for the scripted test
+  var hidden = document.createElement('label');
+  hidden.setAttribute('aria-hidden','true');
+  hidden.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
+  var hi = document.createElement('input');
+  hi.type='checkbox'; hi.setAttribute('switch',''); hi.tabIndex=-1;
+  hidden.appendChild(hi); document.body.appendChild(hidden);
+
+  // ② overlay a transparent real switch on the trusted button
+  (function arm(el){
+    if(getComputedStyle(el).position==='static') el.style.position='relative';
+    var lab=document.createElement('label');
+    lab.style.cssText='position:absolute;inset:0;margin:0;opacity:0;cursor:inherit;';
+    var i=document.createElement('input');
+    i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1;
+    i.style.cssText='position:absolute;inset:0;margin:0;opacity:0;';
+    lab.appendChild(i); el.appendChild(lab);
+  })(document.getElementById('trustedBtn'));
+
+  document.getElementById('scriptBtn').addEventListener('click', function(){
+    try{ hidden.click(); }catch(e){}
+  });
+  document.getElementById('vibrateBtn').addEventListener('click', function(){
+    try{ if(hasVibrate) navigator.vibrate(60); }catch(e){}
+  });
+
+  var iosVer = (ua.match(/OS (\d+)_(\d+)/) || []).slice(1).join('.') || 'unknown';
+  document.getElementById('verdict').innerHTML =
+    'UA: ' + ua + '\n\n' +
+    'iOS detected: ' + (isIOS ? '<span class="ok">yes</span>' : '<span class="no">no</span>') + '\n' +
+    'iOS version (approx): ' + iosVer + '\n' +
+    'navigator.vibrate present: ' + (hasVibrate ? '<span class="ok">yes</span>' : '<span class="no">no (expected on iOS)</span>') + '\n' +
+    'maxTouchPoints: ' + (navigator.maxTouchPoints||0) + '\n\n' +
+    'Report back which of ①②③④ you FELT. That tells us exactly what to wire.';
+})();
+</script>
+</body>
+</html>
