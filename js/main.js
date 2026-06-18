@@ -422,8 +422,8 @@ function initLoader() {
     };
     initHeroReveal();
 
-    // Clapboard snap — crisp high-frequency tap the instant the slate shuts.
-    const clap = () => triggerKineticResonance(35, 80, 2.5);
+    // Clapboard snap — crisp body-thump the instant the slate shuts.
+    const clap = () => triggerKineticResonance(90, 80, 2.5);
 
     if (flash) {
       gsap.timeline()
@@ -821,7 +821,7 @@ function initMagneticButtons() {
       gsap.to(btn, { x: dx, y: dy, ease: 'power2.out', duration: 0.4 });
 
       // Elastic tension — gain scales with how far the magnet is stretched.
-      if (!voice) voice = Resonance.rumble(15);
+      if (!voice) voice = Resonance.rumble(55);
       const stretch = Math.min(1, Math.hypot(dx, dy) / (Math.max(r.width, r.height) * 0.42));
       voice.set(stretch);
     });
@@ -839,8 +839,8 @@ function initCardTilt() {
   if (window.matchMedia('(hover:none)').matches) return;
 
   $$('.film-card, .director-card, .cast-card').forEach(card => {
-    // Compression thud — deep architectural grounding on press, masking lerp lag.
-    card.addEventListener('mousedown', () => triggerKineticResonance(12, 120, 1.8));
+    // Compression thud — deep body grounding on press, masking lerp lag.
+    card.addEventListener('mousedown', () => triggerKineticResonance(70, 120, 1.8));
     card.addEventListener('mousemove', e => {
       const r  = card.getBoundingClientRect();
       const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
@@ -1034,10 +1034,13 @@ const Resonance = (() => {
   const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
 
   // 8th-order Butterworth low-pass (4 cascaded biquads = 48 dB/octave).
-  // Stage Q values for a maximally-flat passband at the 35 Hz corner.
+  // Maximally-flat passband; Q values are corner-independent so the same
+  // cascade is retuned per-burst by moving the corner frequency.
   const BUTTERWORTH_Q = [0.50979558, 0.60134489, 0.89997622, 2.56291545];
-  const CUTOFF = 35;        // Hz — the audible-silence ceiling
-  const THROTTLE = 0.85;    // Haptic Throttle Master — global output ceiling
+  const THROTTLE = 0.7;     // Haptic Throttle Master — global output ceiling
+  // Body-thump band: corner sits well above the fundamental so a 5 ms attack
+  // survives the filter, while the harsh upper square harmonics are removed.
+  const clampHz = (hz, lo, hi) => Math.min(hi, Math.max(lo, hz));
 
   let ctx = null;           // lazily-instantiated AudioContext
   let throttle = null;      // master GainNode → destination
@@ -1055,13 +1058,13 @@ const Resonance = (() => {
     return ctx;
   }
 
-  // Build a fresh 48 dB/oct low-pass cascade. Returns { input, output }.
-  function cascade() {
+  // Build a fresh 48 dB/oct low-pass cascade at `cutoff` Hz. { input, output }.
+  function cascade(cutoff) {
     let input = null, prev = null;
     for (let i = 0; i < 4; i++) {
       const f = ctx.createBiquadFilter();
       f.type = 'lowpass';
-      f.frequency.value = CUTOFF;
+      f.frequency.value = cutoff;
       f.Q.value = BUTTERWORTH_Q[i];
       if (prev) prev.connect(f); else input = f;
       prev = f;
@@ -1100,8 +1103,10 @@ const Resonance = (() => {
   }
 
   // ── Kinetic envelope ──────────────────────────────────────
-  // Sculpts a one-shot square-wave burst through the cascade with a
-  // 5 ms attack and exponential decay. `intensity` scales peak gain.
+  // Sculpts a one-shot body-thump: a pitch-dropping square through an
+  // adaptive cascade with a 5 ms attack and exponential decay. The
+  // pitch drop gives the crisp transient; the moving corner lets it
+  // survive the filter. `intensity` scales peak gain.
   function trigger(frequency, duration, intensity) {
     const c = ensure();
     if (!c) return;
@@ -1109,18 +1114,22 @@ const Resonance = (() => {
 
     const t0 = c.currentTime;
     const dur = Math.max(0.012, duration / 1000);
-    const peak = Math.min(1, Math.max(0.0001, intensity * 0.34));
+    const peak = Math.min(0.95, Math.max(0.0001, intensity * 0.3));
 
     const osc = c.createOscillator();
     osc.type = 'square';                       // abrupt voice-coil actuation
-    osc.frequency.setValueAtTime(frequency, t0);
+    // Pitch-drop transient — strikes ~1.4 octaves high, settles to the body
+    // frequency, the classic punchy "thump" attack.
+    osc.frequency.setValueAtTime(frequency * 2.4, t0);
+    osc.frequency.exponentialRampToValueAtTime(frequency, t0 + Math.min(0.05, dur * 0.5));
 
     const env = c.createGain();
     env.gain.setValueAtTime(0.0001, t0);
     env.gain.linearRampToValueAtTime(peak, t0 + 0.005);          // 5 ms attack
     env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);     // exp decay
 
-    const lp = cascade();
+    // Corner ~6× the fundamental (220–900 Hz): passes the fast attack, tames buzz.
+    const lp = cascade(clampHz(frequency * 6, 220, 900));
     osc.connect(lp.input);
     lp.output.connect(env);
     env.connect(throttle);
@@ -1144,7 +1153,7 @@ const Resonance = (() => {
     osc.frequency.value = frequency;
     const env = c.createGain();
     env.gain.value = 0.0001;
-    const lp = cascade();
+    const lp = cascade(clampHz(frequency * 5, 180, 600));
     osc.connect(lp.input);
     lp.output.connect(env);
     env.connect(throttle);
