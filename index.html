@@ -1286,8 +1286,18 @@ function doCut(sc,nm,level){
   if(REDUCED){
     tl.set(cut,{opacity:1}).to(cut,{opacity:0,duration:.4,delay:.25});
   }else{
+    // Tier weight — high acts land hard, low acts whisper (same felt language as the clap).
+    const W = level==='high' ? 1.2 : level==='low' ? 0.55 : 0.85;
+    // LAMP PULSE — a tier-scaled full-frame flash (the fixed strike flash), the cut's "impact".
+    if(impactFlash){
+      gsap.killTweensOf(impactFlash);
+      gsap.timeline().set(impactFlash,{opacity:Math.min(.7,.18+.36*W)})
+        .to(impactFlash,{opacity:0,duration:.34+.08*W,ease:'expo.out'});
+    }
     tl.fromTo(cut,{opacity:0},{opacity:1,duration:.1})
-      .fromTo('.cut-card',{scale:.94,opacity:0},{scale:1,opacity:1,duration:.22,ease:'power3.out'},0)
+      // PUNCH-IN entrance with a tier-scaled overshoot — the kinetic recoil, scaled per act.
+      .fromTo('.cut-card',{scale:1-.11*W,opacity:0},
+        {scale:1,opacity:1,duration:.34,ease:'back.out('+(1.3+W*0.9).toFixed(2)+')'},0)
       .fromTo(leak,{x:'-120%',opacity:.9},{x:'120%',duration:.6,ease:'power2.inOut'},0)
       .to(leak,{opacity:0,duration:.2},'-=.2')
       .to('.cut-card',{opacity:0,scale:1.04,duration:.3,ease:'power2.in'},'+=.15')
