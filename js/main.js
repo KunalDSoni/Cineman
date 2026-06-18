@@ -422,13 +422,18 @@ function initLoader() {
     };
     initHeroReveal();
 
+    // Clapboard snap — crisp high-frequency tap the instant the slate shuts.
+    const clap = () => triggerKineticResonance(35, 80, 2.5);
+
     if (flash) {
       gsap.timeline()
+        .add(clap)
         .to(flash,  { opacity: 1, duration: 0.16, ease: 'power2.in' })
         .to(loader, { opacity: 0, duration: 0.55, ease: 'power2.inOut' }, '-=0.02')
         .to(flash,  { opacity: 0, duration: 0.55, ease: 'power2.out' }, '-=0.35')
         .add(finish, '-=0.25');
     } else {
+      clap();
       gsap.to(loader, { opacity: 0, duration: 0.7, ease: 'power2.inOut', onComplete: finish });
     }
   }, 3400);
@@ -808,14 +813,21 @@ function initMagneticButtons() {
   if (window.matchMedia('(hover:none)').matches) return;
 
   $$('.btn-primary, .nav-cta').forEach(btn => {
+    let voice = null;                       // sustained 15 Hz rumble, lazily armed
     btn.addEventListener('mousemove', e => {
       const r = btn.getBoundingClientRect();
       const dx = (e.clientX - r.left - r.width  / 2) * 0.28;
       const dy = (e.clientY - r.top  - r.height / 2) * 0.28;
       gsap.to(btn, { x: dx, y: dy, ease: 'power2.out', duration: 0.4 });
+
+      // Elastic tension — gain scales with how far the magnet is stretched.
+      if (!voice) voice = Resonance.rumble(15);
+      const stretch = Math.min(1, Math.hypot(dx, dy) / (Math.max(r.width, r.height) * 0.42));
+      voice.set(stretch);
     });
     btn.addEventListener('mouseleave', () => {
       gsap.to(btn, { x: 0, y: 0, ease: 'elastic.out(1, 0.4)', duration: 0.8 });
+      if (voice) { voice.stop(); voice = null; }   // release the band
     });
   });
 }
@@ -827,6 +839,8 @@ function initCardTilt() {
   if (window.matchMedia('(hover:none)').matches) return;
 
   $$('.film-card, .director-card, .cast-card').forEach(card => {
+    // Compression thud — deep architectural grounding on press, masking lerp lag.
+    card.addEventListener('mousedown', () => triggerKineticResonance(12, 120, 1.8));
     card.addEventListener('mousemove', e => {
       const r  = card.getBoundingClientRect();
       const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
@@ -1000,6 +1014,188 @@ function initSound() {
     if (!ctx || !on) return;
     document.hidden ? ctx.suspend() : ctx.resume();
   });
+}
+
+/* ─────────────────────────────────────────
+   17b. SUBSONIC AUDIO-HAPTIC RESONANCE ENGINE
+   ───────────────────────────────────────────
+   A hardware-accelerated Web Audio DSP graph that synthesises
+   sub-35Hz kinetic envelopes. On a coarse-pointer device the
+   inaudible low end couples into the chassis and we additionally
+   fire the real vibration motor (navigator.vibrate) where the
+   platform exposes it. On desktop / unsupported hardware the
+   graph runs silently and throws nothing — every call is a no-op
+   wrapped in defensive guards. Zero per-frame allocation on the
+   hot paths; oscillators are one-shot and self-prune via onended.
+───────────────────────────────────────── */
+const Resonance = (() => {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  const COARSE = matchMedia('(pointer:coarse)').matches;
+  const REDUCED = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // 8th-order Butterworth low-pass (4 cascaded biquads = 48 dB/octave).
+  // Stage Q values for a maximally-flat passband at the 35 Hz corner.
+  const BUTTERWORTH_Q = [0.50979558, 0.60134489, 0.89997622, 2.56291545];
+  const CUTOFF = 35;        // Hz — the audible-silence ceiling
+  const THROTTLE = 0.85;    // Haptic Throttle Master — global output ceiling
+
+  let ctx = null;           // lazily-instantiated AudioContext
+  let throttle = null;      // master GainNode → destination
+  let unlocked = false;
+
+  // ── Lazy graph instantiation ──────────────────────────────
+  function ensure() {
+    if (ctx || !AC) return ctx;
+    try {
+      ctx = new AC({ latencyHint: 'interactive' });
+      throttle = ctx.createGain();
+      throttle.gain.value = THROTTLE;
+      throttle.connect(ctx.destination);
+    } catch (_) { ctx = null; }
+    return ctx;
+  }
+
+  // Build a fresh 48 dB/oct low-pass cascade. Returns { input, output }.
+  function cascade() {
+    let input = null, prev = null;
+    for (let i = 0; i < 4; i++) {
+      const f = ctx.createBiquadFilter();
+      f.type = 'lowpass';
+      f.frequency.value = CUTOFF;
+      f.Q.value = BUTTERWORTH_Q[i];
+      if (prev) prev.connect(f); else input = f;
+      prev = f;
+    }
+    return { input, output: prev };
+  }
+
+  // ── WebKit gestural unlock ────────────────────────────────
+  // A transparent, pointer-passthrough overlay that captures the
+  // very first interaction to resume the context, then self-destructs.
+  function bridge() {
+    if (!AC || unlocked) return;
+    const el = document.createElement('div');
+    el.id = 'haptic-gesture-bridge';
+    el.style.cssText =
+      'position:fixed;inset:0;z-index:2147483647;pointer-events:none;' +
+      'background:transparent;contain:strict;';
+    document.body.appendChild(el);
+
+    const unlock = () => {
+      unlocked = true;
+      const c = ensure();
+      if (c && c.state === 'suspended') c.resume().catch(() => {});
+      // A zero-gain primer tone fully arms WebKit's audio pipeline.
+      if (c) { try { trigger(20, 1, 0.0001); } catch (_) {} }
+      window.removeEventListener('touchstart', unlock);
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('click', unlock);
+      el.remove();
+    };
+    // Listen on window (capture) so the bridge can pass pointer events
+    // straight through to the page while still arming on first contact.
+    window.addEventListener('touchstart', unlock, { once: true, passive: true, capture: true });
+    window.addEventListener('pointerdown', unlock, { once: true, passive: true, capture: true });
+    window.addEventListener('click', unlock, { once: true, capture: true });
+  }
+
+  // ── Kinetic envelope ──────────────────────────────────────
+  // Sculpts a one-shot square-wave burst through the cascade with a
+  // 5 ms attack and exponential decay. `intensity` scales peak gain.
+  function trigger(frequency, duration, intensity) {
+    const c = ensure();
+    if (!c) return;
+    if (c.state === 'suspended') c.resume().catch(() => {});
+
+    const t0 = c.currentTime;
+    const dur = Math.max(0.012, duration / 1000);
+    const peak = Math.min(1, Math.max(0.0001, intensity * 0.34));
+
+    const osc = c.createOscillator();
+    osc.type = 'square';                       // abrupt voice-coil actuation
+    osc.frequency.setValueAtTime(frequency, t0);
+
+    const env = c.createGain();
+    env.gain.setValueAtTime(0.0001, t0);
+    env.gain.linearRampToValueAtTime(peak, t0 + 0.005);          // 5 ms attack
+    env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);     // exp decay
+
+    const lp = cascade();
+    osc.connect(lp.input);
+    lp.output.connect(env);
+    env.connect(throttle);
+
+    osc.onended = () => { try { osc.disconnect(); env.disconnect(); lp.output.disconnect(); } catch (_) {} };
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+
+    motor(duration, intensity);
+  }
+
+  // ── Sustained rumble voice ────────────────────────────────
+  // One persistent oscillator whose gain is steered in real time — no
+  // per-frame node creation, so it is safe to drive from mousemove.
+  function rumble(frequency) {
+    const c = ensure();
+    if (!c) return { set() {}, stop() {} };
+
+    const osc = c.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = frequency;
+    const env = c.createGain();
+    env.gain.value = 0.0001;
+    const lp = cascade();
+    osc.connect(lp.input);
+    lp.output.connect(env);
+    env.connect(throttle);
+    let live = true;
+    try { osc.start(); } catch (_) {}
+
+    return {
+      // amount: 0..1 visual offset → smoothed gain target
+      set(amount) {
+        if (!live) return;
+        const g = Math.min(0.9, Math.max(0.0001, amount * 0.9));
+        try { env.gain.setTargetAtTime(g, c.currentTime, 0.05); } catch (_) {}
+      },
+      stop() {
+        if (!live) return;
+        live = false;
+        const t = c.currentTime;
+        try {
+          env.gain.cancelScheduledValues(t);
+          env.gain.setTargetAtTime(0.0001, t, 0.04);
+          osc.stop(t + 0.3);
+          osc.onended = () => { try { osc.disconnect(); env.disconnect(); lp.output.disconnect(); } catch (_) {} };
+        } catch (_) {}
+      },
+    };
+  }
+
+  // ── Real motor layer (Android / supporting WebKit) ────────
+  // The only path that produces guaranteed tactile output. Silent
+  // no-op on hardware without an exposed vibration actuator.
+  function motor(duration, intensity) {
+    if (!COARSE || REDUCED) return;
+    try {
+      if (typeof navigator.vibrate === 'function') {
+        navigator.vibrate(Math.round(Math.min(60, Math.max(8, duration * intensity * 0.5))));
+      }
+    } catch (_) {}
+  }
+
+  return { bridge, trigger, rumble, supported: !!AC };
+})();
+
+// Public entry point wired into the UI systems below.
+function triggerKineticResonance(frequency, duration, intensity) {
+  Resonance.trigger(frequency, duration, intensity);
+}
+window.triggerKineticResonance = triggerKineticResonance;
+
+function initResonanceEngine() {
+  if (!Resonance.supported) return;       // desktop fallback: silent, no errors
+  Resonance.bridge();
 }
 
 /* ─────────────────────────────────────────
@@ -1220,6 +1416,7 @@ function init() {
     initScrollProgress();
     initNav();
     initMenu();
+    initResonanceEngine();   // subsonic audio-haptic graph + gesture bridge
     initSound();             // opt-in cinematic ambience
     initDust();              // atmospheric dust in dark scenes
     initLivingAtmosphere();  // ░ breathing engine: pulse · energy · idle · exposure · camera
