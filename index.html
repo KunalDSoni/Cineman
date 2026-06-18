@@ -814,16 +814,19 @@ const Haptics={
   // toggle fires on the RELEASE (the click) — exactly the clap moment in our hold→release
   // model — so iPhone feels a genuine system haptic at contact. The click harmlessly bubbles.
   armTap(el){
-    if(!this.isIOS || !el || el.__hapt) return; el.__hapt=true;
+    if(!this.isIOS || !el || el.__hapt) return null; el.__hapt=true;
     const lab=document.createElement('label');
     lab.setAttribute('aria-hidden','true');
-    lab.style.cssText='position:absolute;inset:0;display:block;margin:0;opacity:0;cursor:inherit;-webkit-tap-highlight-color:transparent;';
+    // z-index keeps the switch ABOVE the element's own decorative layers so the
+    // finger lands on it — otherwise a sibling absolute layer eats the toggle.
+    lab.style.cssText='position:absolute;inset:0;display:block;margin:0;opacity:0;z-index:6;cursor:inherit;-webkit-tap-highlight-color:transparent;';
     const i=document.createElement('input');
     i.type='checkbox'; i.setAttribute('switch',''); i.tabIndex=-1; i.setAttribute('aria-hidden','true');
-    i.style.cssText='position:absolute;top:0;left:0;margin:0;opacity:0;';
+    i.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;margin:0;opacity:0;';
     lab.appendChild(i);
     if(getComputedStyle(el).position==='static') el.style.position='relative';
     el.appendChild(lab);
+    return i;   // caller can bind to the native toggle (the trusted haptic moment)
   },
   iosTick(){ if(this._sw){ try{ this._sw.click(); return true; }catch(e){} } return false; },
   buzz(pattern){ if(this.canVibrate){ try{ navigator.vibrate(pattern); return true; }catch(e){} } return false; },
@@ -1132,7 +1135,7 @@ function reveal(){
 
 // set the slate copy + aria to the chosen mode
 if(ctaText) ctaText.textContent = HOLD_MODE ? 'HOLD TO ROLL' : 'TAP TO BEGIN';
-if(slateSub) slateSub.textContent = HOLD_MODE ? 'Press & hold · release to clap · sound on'
+if(slateSub) slateSub.textContent = HOLD_MODE ? 'Tap to clap · or hold to wind, release · sound on'
                                               : 'Tap to begin · sound on · headphones recommended';
 slate.setAttribute('aria-label', HOLD_MODE
   ? 'Scene 01, Take 01. Press and hold to wind the slate, then release to clap. Enables sound.'
@@ -1145,7 +1148,12 @@ if(HOLD_MODE){
   window.addEventListener('pointercancel',()=>{ if(started) doSnap(); });
   slate.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&!e.repeat){ e.preventDefault(); beginHold(); } });
   slate.addEventListener('keyup',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); doSnap(); } });
-  Haptics.armTap(slate);   // overlay a real <input switch> so the RELEASE toggles it → trusted iOS haptic AT contact
+  // Overlay a real <input switch>. Its NATIVE toggle is the only event iOS fires a
+  // haptic on — so make that toggle BE the clap: the felt tick and the strike are
+  // one trusted gesture. A long hold can swallow the synthesized click, so a quick
+  // TAP (down+up) toggles it reliably; the wind-up still works if you hold first.
+  const slateSwitch=Haptics.armTap(slate);
+  if(slateSwitch) slateSwitch.addEventListener('change',()=>{ if(started && !struck) doSnap(); });
 }else{
   // Android / desktop: one tap to begin, then the authored curve plays hands-free.
   slate.addEventListener('click',beginPassive);
@@ -1294,6 +1302,10 @@ $$('.card').forEach(card=>{
   if(!REDUCED) gsap.set(card.querySelector('.card-media'),{filter:'blur(5px) brightness(.82)'});
   if(!COARSE){ card.addEventListener('mouseenter',()=>rackIn(card)); card.addEventListener('mouseleave',()=>rackOut(card)); }
   card.addEventListener('focus',()=>rackIn(card)); card.addEventListener('blur',()=>rackOut(card));
+  Haptics.armTap(card);          // iOS: a real tap on the card fires a trusted system haptic
+  if(COARSE){                    // touch has no hover — tap rack-focuses (overlay carries the haptic)
+    card.addEventListener('click',()=>{ rackIn(card); clearTimeout(card.__rt); card.__rt=setTimeout(()=>rackOut(card),1100); });
+  }
 });
 
 // buttons: shutter snap + aperture-iris ripple + magnetic
