@@ -422,8 +422,9 @@ function initLoader() {
     };
     initHeroReveal();
 
-    // Clapboard snap — crisp body-thump the instant the slate shuts.
-    const clap = () => triggerKineticResonance(90, 80, 2.5);
+    // Clapboard snap — crisp body-thump + visible jolt the instant the slate shuts.
+    // (No iOS Taptic here: it auto-fires with no trusted gesture. The jolt + audio carry it.)
+    const clap = () => Resonance.impact($('#loader-logo-wrap'), 90, 80, 2.5, 1.8);
 
     if (flash) {
       gsap.timeline()
@@ -839,8 +840,7 @@ function initCardTilt() {
   if (window.matchMedia('(hover:none)').matches) return;
 
   $$('.film-card, .director-card, .cast-card').forEach(card => {
-    // Compression thud — deep body grounding on press, masking lerp lag.
-    card.addEventListener('mousedown', () => triggerKineticResonance(70, 120, 1.8));
+    // (Press feedback handled by initTactileTargets so touch + mouse share one path.)
     card.addEventListener('mousemove', e => {
       const r  = card.getBoundingClientRect();
       const dx = (e.clientX - r.left - r.width  / 2) / (r.width  / 2);
@@ -1053,7 +1053,13 @@ const Resonance = (() => {
       ctx = new AC({ latencyHint: 'interactive' });
       throttle = ctx.createGain();
       throttle.gain.value = THROTTLE;
-      throttle.connect(ctx.destination);
+      // Brick-wall limiter glues the impact and stops the low end clipping —
+      // the difference between a "loud" hit and an "expensive" one.
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -3; limiter.knee.value = 6; limiter.ratio.value = 12;
+      limiter.attack.value = 0.002; limiter.release.value = 0.18;
+      throttle.connect(limiter);
+      limiter.connect(ctx.destination);
     } catch (_) { ctx = null; }
     return ctx;
   }
@@ -1193,7 +1199,70 @@ const Resonance = (() => {
     } catch (_) {}
   }
 
-  return { bridge, trigger, rumble, supported: !!AC };
+  // ── iOS Taptic ────────────────────────────────────────────
+  // iOS Safari has NO Vibration API. Its ONLY web haptic is the system
+  // tick fired when a native <input switch> is toggled by a TRUSTED tap.
+  // No intensity/duration/frequency control exists — it is one fixed tap.
+  const isIOS = /iP(hone|od|ad)/.test(navigator.userAgent) ||
+                (/Mac/.test(navigator.platform || '') && (navigator.maxTouchPoints || 0) > 1);
+  let hiddenSwitch = null;
+
+  function initIOS() {
+    if (!isIOS || hiddenSwitch || !document.body) return;
+    // Kept RENDERED at native size but off-screen — display:none or 1px clipping
+    // stops iOS treating it as a switch, which kills the haptic.
+    const l = document.createElement('label');
+    l.setAttribute('aria-hidden', 'true');
+    l.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none;';
+    const i = document.createElement('input');
+    i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1; i.setAttribute('aria-hidden', 'true');
+    l.appendChild(i); document.body.appendChild(l); hiddenSwitch = l;
+  }
+
+  // Best-effort scripted tick (less reliable than a trusted tap — see armTap).
+  function iosTick() { if (hiddenSwitch) { try { hiddenSwitch.click(); return true; } catch (_) {} } return false; }
+
+  // Overlay a transparent <label><input switch> on a real tap target so the
+  // user's ACTUAL finger toggles the switch — a trusted activation that
+  // reliably fires the iOS system haptic. The click harmlessly bubbles.
+  function armTap(el) {
+    if (!isIOS || !el || el.__hapt) return; el.__hapt = true;
+    const lab = document.createElement('label');
+    lab.setAttribute('aria-hidden', 'true');
+    lab.style.cssText = 'position:absolute;inset:0;display:block;margin:0;opacity:0;cursor:inherit;-webkit-tap-highlight-color:transparent;';
+    const i = document.createElement('input');
+    i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1; i.setAttribute('aria-hidden', 'true');
+    i.style.cssText = 'position:absolute;top:0;left:0;margin:0;opacity:0;';
+    lab.appendChild(i);
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    el.appendChild(lab);
+  }
+
+  // ── Visible micro-jolt ────────────────────────────────────
+  // A tight 4-step transform shudder. On iOS/desktop (no controllable
+  // motor) this carries the "felt" response, in lockstep with the audio.
+  function microJolt(amp, el) {
+    if (REDUCED || !el || !window.gsap) return;
+    const a = 3.2 * (amp || 1);
+    gsap.killTweensOf(el);
+    gsap.fromTo(el, { x: 0, y: 0 }, { keyframes: [
+      { x: a,        y: -a * 0.7, duration: 0.022 },
+      { x: -a * 0.8, y: a * 0.6,  duration: 0.022 },
+      { x: a * 0.5,  y: -a * 0.4, duration: 0.026 },
+      { x: -a * 0.28, y: a * 0.18, duration: 0.03 },
+      { x: 0,        y: 0,        duration: 0.06 },
+    ], ease: 'none' });
+  }
+
+  // One unified event: audio body-thump + Android motor (inside trigger) +
+  // iOS system tick + the visible jolt — all firing as a single impact.
+  function impact(el, frequency, duration, intensity, joltAmp) {
+    trigger(frequency, duration, intensity);
+    iosTick();
+    microJolt(joltAmp != null ? joltAmp : intensity, el);
+  }
+
+  return { bridge, trigger, rumble, impact, armTap, initIOS, microJolt, isIOS, supported: !!AC };
 })();
 
 // Public entry point wired into the UI systems below.
@@ -1204,7 +1273,21 @@ window.triggerKineticResonance = triggerKineticResonance;
 
 function initResonanceEngine() {
   if (!Resonance.supported) return;       // desktop fallback: silent, no errors
+  Resonance.initIOS();                    // prime the iOS Taptic switch
   Resonance.bridge();
+  initTactileTargets();
+}
+
+// Touch-aware tap feedback. The hover-based magnetic/tilt handlers bail on
+// coarse pointers, so on phones THIS is the path that fires haptics: a real
+// finger on an armed switch (iOS Taptic) plus the audio thump + visible jolt.
+function initTactileTargets() {
+  const tap = (el, freq, dur, intensity, jolt) => {
+    Resonance.armTap(el);                 // trusted iOS system haptic on the real tap
+    el.addEventListener('pointerdown', () => Resonance.impact(el, freq, dur, intensity, jolt), { passive: true });
+  };
+  $$('.film-card, .director-card, .cast-card').forEach(el => tap(el, 70, 120, 1.8, 1.4));
+  $$('.btn-primary, .nav-cta').forEach(el => tap(el, 90, 70, 2.0, 1.0));
 }
 
 /* ─────────────────────────────────────────
